@@ -1,5 +1,6 @@
 @import "./variables.css";
 @import "./theme.css";
+@import "./dashboard.css";
 
 * {
   box-sizing: border-box;

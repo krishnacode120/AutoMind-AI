@@ -24,12 +24,19 @@ class PersistenceEngine:
         snapshot: SimulationSnapshot,
     ) -> Telemetry:
         """Save one simulation snapshot as a telemetry record."""
+        from app.events.event_bus import event_bus
+        from app.events.telemetry_events import TELEMETRY_CREATED
+
         vehicle = self._get_vehicle_or_raise(vehicle_id)
         telemetry = self._build_telemetry(vehicle, snapshot)
 
         self._db.add(telemetry)
         self._db.commit()
         self._db.refresh(telemetry)
+
+        # Publish the new telemetry record to the event bus
+        event_bus.publish(TELEMETRY_CREATED, telemetry)
+
         return telemetry
 
     def save_many(
@@ -38,6 +45,9 @@ class PersistenceEngine:
         snapshots: list[SimulationSnapshot],
     ) -> list[Telemetry]:
         """Save multiple simulation snapshots and commit once."""
+        from app.events.event_bus import event_bus
+        from app.events.telemetry_events import TELEMETRY_CREATED
+
         vehicle = self._get_vehicle_or_raise(vehicle_id)
         telemetry_records = [
             self._build_telemetry(vehicle, snapshot)
@@ -49,6 +59,7 @@ class PersistenceEngine:
 
         for telemetry in telemetry_records:
             self._db.refresh(telemetry)
+            event_bus.publish(TELEMETRY_CREATED, telemetry)
 
         return telemetry_records
 

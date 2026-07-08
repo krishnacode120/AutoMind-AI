@@ -1,0 +1,258 @@
+/* ─── Dashboard Page ─── */
+
+.dashboard-page {
+  display: grid;
+  gap: 28px;
+}
+
+/* ─── Dashboard Grid ─── */
+
+.dashboard-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.dashboard-row {
+  display: grid;
+  gap: 24px;
+}
+
+.dashboard-row--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.dashboard-row--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ─── Dashboard Card ─── */
+
+.dashboard-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: default;
+}
+
+.dashboard-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-card__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dashboard-card__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.dashboard-card__icon--primary {
+  background: rgba(79, 140, 255, 0.12);
+  color: var(--color-primary);
+}
+
+.dashboard-card__icon--success {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--color-success);
+}
+
+.dashboard-card__icon--warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+}
+
+.dashboard-card__icon--danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--color-danger);
+}
+
+/* ─── Card Body ─── */
+
+.dashboard-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.dashboard-card__value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.dashboard-card__value--sm {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.dashboard-card__label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* ─── Status Indicator ─── */
+
+.dashboard-card__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dashboard-card__dot--success {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.dashboard-card__dot--primary {
+  background: var(--color-primary);
+  box-shadow: 0 0 8px rgba(79, 140, 255, 0.4);
+}
+
+/* ─── Vehicle Overview ─── */
+
+.vehicle-overview__details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.vehicle-overview__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vehicle-overview__detail-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vehicle-overview__detail-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ─── Health Card ─── */
+
+.health-card__bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.health-card__bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--color-success);
+}
+
+.health-card__bar-fill--full {
+  width: 100%;
+}
+
+/* ─── Alerts Card ─── */
+
+.alerts-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alerts-card__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.alerts-card__item-icon {
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+/* ─── Quick Actions ─── */
+
+.quick-actions__list {
+  display: grid;
+  gap: 10px;
+}
+
+.quick-actions__btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.quick-actions__btn:hover {
+  background: rgba(79, 140, 255, 0.08);
+  border-color: var(--color-primary);
+}
+
+.quick-actions__btn-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 1024px) {
+  .dashboard-row--3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-row--2,
+  .dashboard-row--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .vehicle-overview__details {
+    grid-template-columns: 1fr;
+  }
+}
