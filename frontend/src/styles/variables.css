@@ -1,0 +1,13 @@
+:root {
+  color-scheme: dark;
+  --color-bg: #0b0f14;
+  --color-panel: #121821;
+  --color-panel-soft: #18202b;
+  --color-border: #263241;
+  --color-text: #eef3f8;
+  --color-muted: #9ba8b5;
+  --color-accent: #34d399;
+  --color-accent-strong: #22c55e;
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.24);
+  --sidebar-width: 260px;
+}
