@@ -1,6 +1,7 @@
 import PageHeader from "../components/common/PageHeader";
 import DashboardGrid from "../components/dashboard/DashboardGrid";
 import TelemetryCharts from "../components/charts/TelemetryCharts";
+import BONChat from "../components/bon/BONChat";
 import Loading from "../components/common/Loading";
 import { useVehicles } from "../hooks/useVehicle";
 import { useTelemetrySocket } from "../hooks/useTelemetrySocket";
@@ -29,6 +30,7 @@ function Dashboard() {
         <>
           <DashboardGrid vehicleId={vehicleId} />
           <TelemetryCharts vehicleId={vehicleId} />
+          <BONChat vehicleId={vehicleId} />
         </>
       )}
     </div>
