@@ -3,3 +3,8 @@ pydantic-settings
 sqlalchemy
 alembic
 uvicorn[standard]
+scikit-learn
+joblib
+pytest
+pytest-asyncio
+ruff

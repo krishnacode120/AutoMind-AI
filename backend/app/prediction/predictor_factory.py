@@ -1,8 +1,12 @@
 """Predictor factory."""
 
+import logging
+
 from app.prediction.base_predictor import VehiclePredictor
 from app.prediction.ml_predictor import MLPredictor
 from app.prediction.rule_predictor import RuleBasedPredictor
+
+logger = logging.getLogger(__name__)
 
 
 class PredictorFactory:
@@ -16,6 +20,10 @@ class PredictorFactory:
             return RuleBasedPredictor()
 
         if normalized_name == "ml":
-            return MLPredictor()
+            return MLPredictor(fallback_to_rule=False)
+
+        if normalized_name == "auto":
+            logger.info("Creating auto predictor with ML fallback behavior")
+            return MLPredictor(fallback_to_rule=True)
 
         raise ValueError(f"Unknown predictor: {predictor_name}")

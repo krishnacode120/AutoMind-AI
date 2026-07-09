@@ -1,113 +1,159 @@
 # AutoMind AI
 
-AutoMind AI is an open-source project foundation for an AI-powered vehicle assistant. The long-term vision is to monitor simulated vehicle telemetry, predict maintenance needs, and answer vehicle-related questions through an assistant named BON.
+```text
+AutoMind AI — Intelligent Vehicle Monitoring, Prediction, and Assistant Platform
+```
 
-This repository is currently in the project initialization milestone. It contains only the planned folder structure, documentation stubs, and dependency manifests needed to support future development.
+AutoMind AI is an end-to-end vehicle intelligence platform that combines telemetry simulation, deterministic diagnostics, machine-learning prediction, and conversational assistance.
 
-## Planned Features
+## BON AI Overview
 
-- Simulated vehicle telemetry ingestion and monitoring
-- Predictive maintenance workflows
-- BON assistant for vehicle questions and guidance
-- SQLite-backed local persistence
-- Machine learning experiments for maintenance prediction
-- Local AI integration through Ollama
-- React-based user interface for vehicle status and assistant interactions
+BON is the in-app assistant for vehicle context. BON parses intent, builds context from vehicle telemetry and system services, and returns guided responses for operators.
 
-## Architecture
+## Features
 
-AutoMind AI is organized as a modular full-stack application:
+- FastAPI backend with modular service architecture
+- Real-time vehicle telemetry simulation and persistence
+- Health scoring, alert generation, and maintenance planning
+- Rule-based and ML-powered prediction framework
+- BON assistant endpoint for contextual chat
+- React + Vite dashboard for live vehicle monitoring
+- WebSocket telemetry streaming
 
-- `backend/` will contain the FastAPI application and supporting backend modules.
-- `frontend/` will contain the React, Vite, and TypeScript application.
-- `ml/` will hold future machine learning experimentation and model assets.
-- `datasets/` will hold future sample or development datasets.
-- `docs/` will contain project planning, requirements, architecture, and design documentation.
-- `tests/` will contain future automated test suites.
-- `.github/` will contain future GitHub workflow and repository automation configuration.
+## System Architecture
+
+- **Simulator Layer**: Generates vehicle state and telemetry snapshots.
+- **Service Layer**: Computes health, alerts, and maintenance outputs.
+- **Prediction Layer**: Supports rule and ML predictors with factory selection.
+- **AI Layer**: BON orchestrates intent parsing, context building, and response formatting.
+- **API Layer**: REST and WebSocket interfaces for frontend and integrations.
+- **Frontend Layer**: Dashboard and BON chat experiences.
 
 ## Folder Structure
 
 ```text
 AutoMind-AI/
 ├── backend/
-│   └── app/
-│       ├── ai/
-│       ├── api/
-│       ├── core/
-│       ├── database/
-│       ├── ml/
-│       ├── models/
-│       ├── schemas/
-│       ├── services/
-│       ├── simulator/
-│       └── utils/
-├── datasets/
-├── docs/
+│   ├── app/
+│   │   ├── ai/
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── database/
+│   │   ├── ml/
+│   │   ├── models/
+│   │   ├── prediction/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   ├── simulator/
+│   │   └── websocket/
+│   ├── tests/
+│   └── Dockerfile
 ├── frontend/
-│   └── src/
-│       ├── assets/
-│       ├── components/
-│       ├── hooks/
-│       ├── layouts/
-│       ├── pages/
-│       ├── routes/
-│       ├── services/
-│       ├── types/
-│       └── utils/
-├── ml/
-├── tests/
-└── .github/
+│   ├── src/
+│   └── Dockerfile
+├── docs/
+├── .github/workflows/
+├── docker-compose.yml
+└── requirements.txt
 ```
 
 ## Technology Stack
 
-### Backend
+- **Backend**: Python, FastAPI, SQLAlchemy, Pydantic
+- **ML**: scikit-learn, joblib
+- **Frontend**: React, TypeScript, Vite
+- **Database**: SQLite
+- **Tooling**: pytest, Ruff, GitHub Actions, Docker Compose
 
-- Python
-- FastAPI
+## Installation Guide
 
-### Frontend
+1. Clone the repository.
+2. Create environment files:
+   - `cp backend/.env.example backend/.env`
+   - `cp frontend/.env.example frontend/.env`
+3. Install dependencies:
+   - `pip install -r requirements.txt`
+   - `cd frontend && npm ci`
 
-- React
-- Vite
-- TypeScript
+## Backend Setup
 
-### Future Database
+```bash
+cd backend
+uvicorn app.main:app --reload
+```
 
-- SQLite
+Backend default URL: [http://localhost:8000](http://localhost:8000)
 
-### Future AI
+## Frontend Setup
 
-- Ollama
+```bash
+cd frontend
+npm run dev
+```
 
-### Future Machine Learning
+Frontend default URL: [http://localhost:5173](http://localhost:5173)
 
-- scikit-learn
+## Running the Simulator
 
-## Development Roadmap
+Use the telemetry and vehicle API routes to create vehicles and emit telemetry snapshots through backend endpoints; simulator modules are integrated in backend services and runner components.
 
-1. Project foundation and documentation
-2. Backend application bootstrap
-3. Frontend application bootstrap
-4. Simulated vehicle telemetry model and data flow
-5. SQLite persistence layer
-6. Maintenance prediction experiments
-7. BON assistant integration
-8. Testing, packaging, and release workflow
+## Running ML Training
 
-## Contributing
+```bash
+cd backend
+python -m app.ml.training.train --dataset "PATH_TO_DATASET.csv"
+```
 
-Contributions are welcome once the project begins active implementation. To contribute:
+Generated artifacts are saved in `backend/app/ml/models/`.
 
-1. Fork the repository.
-2. Create a focused feature branch.
-3. Keep changes scoped and documented.
-4. Add or update tests when implementation begins.
-5. Open a pull request with a clear description of the change.
+## Running the Dashboard
 
-Please avoid adding authentication, AI, machine learning, telemetry, APIs, or placeholder business logic during the initialization milestone.
+Run backend and frontend together, then open the frontend URL to access dashboard pages for vehicles, telemetry, health, maintenance, prediction, and BON.
+
+## BON Chat Usage
+
+- Endpoint: `POST /api/v1/bon/chat`
+- Input: vehicle ID, message, session ID
+- Output: answer, intent, confidence, context used, timestamp
+
+## REST API Overview
+
+- `GET /api/v1/` and `GET /api/v1/health`
+- `POST/GET/PUT/DELETE /api/v1/vehicles`
+- `POST /api/v1/telemetry`
+- `GET/DELETE /api/v1/telemetry/history/{vehicle_id}`
+- `GET /api/v1/telemetry/latest/{vehicle_id}`
+- `POST /api/v1/bon/chat`
+
+## WebSocket Overview
+
+- URL: `ws://localhost:8000/api/v1/ws/telemetry/{vehicle_id}`
+- Event: `telemetry_update`
+- Payload: serialized telemetry record in a standard message envelope
+
+## Machine Learning Pipeline
+
+1. Generate CSV datasets from simulator outputs.
+2. Train Logistic Regression, Random Forest, and Gradient Boosting models.
+3. Evaluate and compare metrics.
+4. Persist the best model and metadata.
+5. Use `MLPredictor` or factory `auto` mode at runtime.
+
+## Screenshots
+
+Screenshots will be added in a future release.
+
+## Demo Video
+
+Demo video link will be added in a future release.
+
+## Roadmap
+
+- Add production deployment templates (Kubernetes and managed DB options)
+- Expand test coverage with API integration scenarios
+- Add benchmark suite for simulation and prediction throughput
+- Add richer BON evaluation and prompt tuning workflows
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under MIT. See [LICENSE](LICENSE).
