@@ -31,7 +31,12 @@ class ConversationMemory:
         """Retrieve the message history for a session."""
         return self._sessions.get(session_id, [])
 
+    def has_session(self, session_id: str) -> bool:
+        """Return whether a session exists."""
+        return session_id in self._sessions
+
     def clear_session(self, session_id: str) -> None:
         """Clear the message history for a specific session."""
         if session_id in self._sessions:
             del self._sessions[session_id]
+

@@ -13,11 +13,11 @@ class BONAssistant:
 
     def __init__(self) -> None:
         """Initialize the core AI components."""
+        self.memory = ConversationMemory()
         self.intent_parser = IntentParser()
-        self.context_builder = ContextBuilder()
+        self.context_builder = ContextBuilder(memory=self.memory)
         self.knowledge_engine = KnowledgeEngine()
         self.response_formatter = ResponseFormatter()
-        self.memory = ConversationMemory()
 
     def process(self, request: BONRequest) -> BONResponse:
         """Process a request sequentially through the BON pipeline."""
@@ -33,7 +33,11 @@ class BONAssistant:
         intent_result = self.intent_parser.parse(request.message)
 
         # 3. Build context
-        context = self.context_builder.build(request.vehicle_id, intent_result.intent)
+        context = self.context_builder.build(
+            vehicle_id=request.vehicle_id,
+            intent=intent_result.intent,
+            session_id=request.session_id,
+        )
 
         # 4. Generate answer
         answer = self.knowledge_engine.answer(intent_result.intent, context)
@@ -43,7 +47,7 @@ class BONAssistant:
             answer=answer,
             intent=intent_result.intent,
             confidence=intent_result.confidence,
-            context=context
+            context=context.model_dump(mode="json"),
         )
 
         # 6. Update memory with assistant's response
@@ -54,3 +58,4 @@ class BONAssistant:
         )
 
         return response
+

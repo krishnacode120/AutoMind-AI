@@ -97,5 +97,5 @@ async def bon_health() -> dict[str, str]:
 
 def _session_exists(assistant: BONAssistant, session_id: str) -> bool:
     """Return whether a conversation session exists."""
-    sessions = getattr(assistant.memory, "_sessions", {})
-    return session_id in sessions
+    return assistant.memory.has_session(session_id)
+
