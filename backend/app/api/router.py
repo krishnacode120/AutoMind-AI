@@ -2,12 +2,13 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import bon, health, system, telemetry, vehicle, ws
+from app.api.routes import bon, health, insights, system, telemetry, vehicle, ws
 from app.core.version import API_PREFIX
 
 router = APIRouter(prefix=API_PREFIX)
 router.include_router(bon.router)
 router.include_router(health.router)
+router.include_router(insights.router)
 router.include_router(system.router)
 router.include_router(telemetry.router)
 router.include_router(vehicle.router)

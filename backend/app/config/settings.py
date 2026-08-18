@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     REDOC_URL: str = "/redoc"
     OPENAPI_URL: str = "/openapi.json"
     CONTACT_NAME: str = "AutoMind AI Maintainers"
-    CONTACT_URL: str = "https://github.com/placeholder/automind-ai"
+    CONTACT_URL: str = "https://github.com/krishnacode120/AutoMind-AI"
     LICENSE_NAME: str = "MIT"
     LICENSE_URL: str = "https://opensource.org/licenses/MIT"
     CORS_ORIGINS: tuple[str, ...] = (

@@ -5,6 +5,145 @@
   gap: 28px;
 }
 
+.resource-page {
+  display: grid;
+  gap: 24px;
+}
+
+.resource-card {
+  padding: 24px;
+}
+
+.resource-empty,
+.report-summary {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.metric {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-panel-soft);
+}
+
+.metric span {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.metric strong {
+  color: var(--color-text);
+}
+
+.data-list {
+  display: grid;
+  gap: 10px;
+}
+
+.data-list__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-panel-soft);
+}
+
+.data-list__item strong,
+.data-list__item p {
+  margin: 0;
+}
+
+.data-list__item p {
+  margin-top: 5px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.data-list__meta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.health-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.health-summary strong {
+  font-size: 2rem;
+}
+
+.health-summary span {
+  color: var(--color-muted);
+}
+
+.report-section {
+  margin-top: 24px;
+}
+
+.report-section h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.report-section p {
+  color: var(--color-muted);
+}
+
+.report-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-muted);
+}
+
+.priority {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.priority--low,
+.priority--info {
+  background: rgba(79, 140, 255, 0.14);
+  color: var(--color-primary);
+}
+
+.priority--medium,
+.priority--warning {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--color-warning);
+}
+
+.priority--high,
+.priority--urgent,
+.priority--critical {
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--color-danger);
+}
+
 /* ─── Dashboard Grid ─── */
 
 .dashboard-grid {
@@ -254,6 +393,15 @@
 
   .vehicle-overview__details {
     grid-template-columns: 1fr;
+  }
+
+  .data-list__item {
+    flex-direction: column;
+  }
+
+  .data-list__meta {
+    justify-items: start;
+    text-align: left;
   }
 }
 

@@ -123,6 +123,10 @@ Run backend and frontend together, then open the frontend URL to access dashboar
 - `POST /api/v1/telemetry`
 - `GET/DELETE /api/v1/telemetry/history/{vehicle_id}`
 - `GET /api/v1/telemetry/latest/{vehicle_id}`
+- `GET /api/v1/vehicles/{id}/health`
+- `GET /api/v1/vehicles/{id}/alerts`
+- `GET /api/v1/vehicles/{id}/maintenance`
+- `GET /api/v1/vehicles/{id}/prediction`
 - `POST /api/v1/bon/chat`
 
 ## WebSocket Overview
@@ -138,14 +142,6 @@ Run backend and frontend together, then open the frontend URL to access dashboar
 3. Evaluate and compare metrics.
 4. Persist the best model and metadata.
 5. Use `MLPredictor` or factory `auto` mode at runtime.
-
-## Screenshots
-
-Screenshots will be added in a future release.
-
-## Demo Video
-
-Demo video link will be added in a future release.
 
 ## Roadmap
 

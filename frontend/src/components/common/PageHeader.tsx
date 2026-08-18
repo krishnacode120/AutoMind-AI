@@ -3,7 +3,7 @@ type PageHeaderProps = {
   subtitle?: string;
 };
 
-function PageHeader({ title, subtitle = "Coming Soon" }: PageHeaderProps) {
+function PageHeader({ title, subtitle }: PageHeaderProps) {
   return (
     <header className="page-header">
       <h1>{title}</h1>

@@ -64,6 +64,15 @@ curl -X POST http://localhost:8000/api/v1/bon/chat \
   }'
 ```
 
+## Vehicle Insights
+
+```bash
+curl http://localhost:8000/api/v1/vehicles/1/health
+curl http://localhost:8000/api/v1/vehicles/1/alerts
+curl http://localhost:8000/api/v1/vehicles/1/maintenance
+curl http://localhost:8000/api/v1/vehicles/1/prediction
+```
+
 ## WebSocket
 
 Connect client to:
