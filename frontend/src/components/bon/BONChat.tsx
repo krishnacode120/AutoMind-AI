@@ -21,10 +21,15 @@ function BONChat({ vehicleId }: BONChatProps) {
     clearConversation,
     retryLastMessage,
   } = useBON(vehicleId);
-  const endRef = useRef<HTMLDivElement | null>(null);
+  const conversationRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const conversation = conversationRef.current;
+    if (conversation)
+      conversation.scrollTo({
+        top: conversation.scrollHeight,
+        behavior: "smooth",
+      });
   }, [loading, messages]);
 
   return (
@@ -52,7 +57,12 @@ function BONChat({ vehicleId }: BONChatProps) {
         </div>
       </div>
 
-      <div className="bon-chat__conversation" role="log" aria-live="polite">
+      <div
+        ref={conversationRef}
+        className="bon-chat__conversation"
+        role="log"
+        aria-live="polite"
+      >
         {messages.length === 0 && (
           <div className="bon-chat__empty">
             <Bot size={24} />
@@ -74,7 +84,6 @@ function BONChat({ vehicleId }: BONChatProps) {
         ))}
 
         {loading && <BONTyping />}
-        <div ref={endRef} />
       </div>
 
       <BONSuggestions disabled={loading} onSelect={sendMessage} />

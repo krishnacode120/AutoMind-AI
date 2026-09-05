@@ -9,6 +9,7 @@ envelope `{ success, message, timestamp, data }`.
 | --- | --- |
 | Service | `GET /`, `GET /health`, `GET /system` |
 | Vehicles | `POST/GET /vehicles`, `GET/PUT/DELETE /vehicles/{id}` |
+| Sample drive | `POST /vehicles/{id}/simulation?samples=60` (1-300 samples) |
 | Telemetry | `POST /telemetry`, `GET /telemetry/latest/{id}`, `GET/DELETE /telemetry/history/{id}` |
 | Vehicle insights | `GET /vehicles/{id}/health`, `/alerts`, `/maintenance`, `/prediction` |
 | BON | `POST /bon/chat`, `GET/DELETE /bon/sessions/{session_id}`, `GET /bon/health` |

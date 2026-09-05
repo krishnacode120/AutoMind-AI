@@ -31,6 +31,18 @@ Saved under `backend/app/ml/models/`:
 - `PredictorFactory.create("auto")` attempts ML and falls back to rule-based prediction if artifacts are unavailable.
 - Feature ordering is derived from metadata (`feature_names`), ensuring consistency with training.
 
+The current model input is limited to the shared report features in
+`app/ml/features.py`. CSV strings and runtime values use the same normalization
+and vectorization pipeline. Each candidate owns its preprocessing instance.
+Candidates are selected on validation F1/ROC-AUC and the selected candidate is
+evaluated on the untouched test split. Artifact caching uses location and file
+revision so newly trained models can be loaded without a restart.
+
+Dataset metadata (IDs, timestamps, profile/fault annotations) and prediction
+outputs are excluded from training. Synthetic failure labels encode existing
+service rules; this pipeline is a classification demonstration and does not
+establish real-world predictive accuracy.
+
 ## Metrics
 
 Evaluation tracks:

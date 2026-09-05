@@ -95,7 +95,24 @@ Frontend default URL: [http://localhost:5173](http://localhost:5173)
 
 ## Running the Simulator
 
-Use the telemetry and vehicle API routes to create vehicles and emit telemetry snapshots through backend endpoints; simulator modules are integrated in backend services and runner components.
+Create a vehicle on the Vehicles page, select it in the top bar, and click
+**Simulate drive** on Dashboard or Telemetry. Each click records 60 readings
+through the existing physics and sensor engines. This is an explicit sample
+drive, not an automatically running simulator. The dashboard receives updates
+over WebSocket and also refreshes periodically.
+
+The equivalent API call is `POST /api/v1/vehicles/{id}/simulation?samples=60`
+(1-300 samples per request). Deleting a vehicle also deletes its telemetry.
+
+## Generating Datasets
+
+```bash
+cd backend
+python -m app.ml.dataset --size 10000 --seed 0 --output ../datasets/telemetry.csv
+```
+
+The CSV and adjacent `.statistics.json` report contain generated data only;
+this command does not change the application database.
 
 ## Running ML Training
 
@@ -106,6 +123,12 @@ python -m app.ml.training.train --dataset "PATH_TO_DATASET.csv"
 
 Generated artifacts are saved in `backend/app/ml/models/`.
 
+Training uses report fields available at inference time and excludes record IDs,
+timestamps, injected-fault metadata, and prediction outputs. Validation data
+selects the model; a separate test set measures the selected model. These are
+synthetic, rule-defined risk labels, not evidence of real-world failure prediction.
+Retrain older artifacts with the current pipeline before using ML inference.
+
 ## Running the Dashboard
 
 Run backend and frontend together, then open the frontend URL to access dashboard pages for vehicles, telemetry, health, maintenance, prediction, and BON.
@@ -115,6 +138,33 @@ Run backend and frontend together, then open the frontend URL to access dashboar
 - Endpoint: `POST /api/v1/bon/chat`
 - Input: vehicle ID, message, session ID
 - Output: answer, intent, confidence, context used, timestamp
+
+BON works on its dedicated page and on Dashboard. Browser conversations are
+isolated per vehicle and survive refreshes. Clear conversation removes the
+server history too. Server-side history is in memory and resets on restart.
+
+## Verification
+
+```bash
+cd backend
+python -m pytest -q
+ruff check app tests
+cd ../frontend
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+The browser test expects the backend and frontend to be running on ports 8000
+and 5173. Set `API_URL` and `FRONTEND_URL` to test alternate ports. On Windows,
+`$env:PLAYWRIGHT_CHANNEL="msedge"` uses installed Edge instead of downloading
+Chromium. Test-created vehicles are removed after verification. Screenshots
+and local server logs belong in the ignored `.runtime/` directory.
+
+Configure frontend connections through `VITE_API_BASE_URL` and optionally
+`VITE_WS_BASE_URL`, as shown in `frontend/.env.example`. Restart Vite after
+changing environment variables. The backend's `CORS_ORIGINS` must include the
+chosen frontend origin when using a non-default port.
 
 ## REST API Overview
 

@@ -1,6 +1,7 @@
 import { FileSearch, Fuel, Wrench, Zap } from "lucide-react";
 
 import Card from "../common/Card";
+import { Link } from "react-router-dom";
 
 function QuickActionsCard() {
   return (
@@ -13,18 +14,18 @@ function QuickActionsCard() {
       </div>
       <div className="dashboard-card__body">
         <div className="quick-actions__list">
-          <button type="button" className="quick-actions__btn" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+          <Link to="/health" className="quick-actions__btn">
             <Wrench size={16} className="quick-actions__btn-icon" />
-            <span>Run Diagnostics</span>
-          </button>
-          <button type="button" className="quick-actions__btn" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+            <span>View health</span>
+          </Link>
+          <Link to="/telemetry" className="quick-actions__btn">
             <Fuel size={16} className="quick-actions__btn-icon" />
-            <span>Check Fuel System</span>
-          </button>
-          <button type="button" className="quick-actions__btn" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+            <span>View telemetry</span>
+          </Link>
+          <Link to="/maintenance" className="quick-actions__btn">
             <FileSearch size={16} className="quick-actions__btn-icon" />
-            <span>View Maintenance Log</span>
-          </button>
+            <span>View maintenance</span>
+          </Link>
         </div>
       </div>
     </Card>

@@ -3,15 +3,12 @@ import DashboardGrid from "../components/dashboard/DashboardGrid";
 import TelemetryCharts from "../components/charts/TelemetryCharts";
 import BONChat from "../components/bon/BONChat";
 import Loading from "../components/common/Loading";
-import { useVehicles } from "../hooks/useVehicle";
-import { useTelemetrySocket } from "../hooks/useTelemetrySocket";
+import { usePrimaryVehicle } from "../hooks/usePrimaryVehicle";
+import { Link } from "react-router-dom";
+import SimulateDrive from "../components/common/SimulateDrive";
 
 function Dashboard() {
-  const { data: vehicles, isLoading, isError } = useVehicles();
-  const vehicleId = vehicles && vehicles.length > 0 ? vehicles[0].id : null;
-
-  // Initialize WebSocket connection for the selected vehicle
-  useTelemetrySocket(vehicleId);
+  const { data: vehicles, vehicleId, isLoading, isError } = usePrimaryVehicle();
 
   return (
     <div className="dashboard-page">
@@ -19,18 +16,22 @@ function Dashboard() {
         title="Dashboard"
         subtitle="Monitor your vehicle's performance at a glance"
       />
-      
+
       {isLoading && <Loading />}
-      
+
       {(isError || (vehicles && vehicles.length === 0)) && (
-        <p className="dashboard-card__value--sm">No vehicle available.</p>
+        <p className="resource-empty">
+          {isError ? "Cannot reach the backend." : "No vehicles yet."}{" "}
+          <Link to="/vehicles">Manage vehicles</Link>
+        </p>
       )}
 
       {vehicleId && (
         <>
+          <SimulateDrive key={vehicleId} vehicleId={vehicleId} />
           <DashboardGrid vehicleId={vehicleId} />
           <TelemetryCharts vehicleId={vehicleId} />
-          <BONChat vehicleId={vehicleId} />
+          <BONChat key={vehicleId} vehicleId={vehicleId} />
         </>
       )}
     </div>

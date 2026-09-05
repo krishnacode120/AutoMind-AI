@@ -2,17 +2,31 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
-
 from app.core.exceptions import GlobalException
 from app.database.session import get_db
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services import vehicle_service
+from app.services.simulation_service import simulate_drive
+from fastapi import Query
 from app.utils.helpers import success_response
-
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
+
+
+@router.post("/{vehicle_id}/simulation", status_code=status.HTTP_201_CREATED)
+def run_sample_drive(
+    vehicle_id: int,
+    samples: int = Query(default=60, ge=1, le=300),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Generate a finite simulated drive for the selected vehicle."""
+    records = simulate_drive(db, vehicle_id, samples)
+    return success_response(
+        message="Simulated drive recorded",
+        data={"vehicle_id": vehicle_id, "samples": len(records)},
+    )
 
 
 def _vehicle_payload(vehicle: Any) -> dict[str, Any]:

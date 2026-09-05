@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def max_vehicle_year() -> int:
@@ -60,6 +60,16 @@ class VehicleCreate(VehicleBase):
 
 class VehicleUpdate(VehicleBase):
     """Schema for updating a vehicle."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null_fields(cls, data):
+        """Omitted values are unchanged; explicit nulls violate model constraints."""
+        if isinstance(data, dict) and any(
+            data.get(name) is None for name in cls.model_fields if name in data
+        ):
+            raise ValueError("Vehicle fields cannot be null")
+        return data
 
 
 class VehicleResponse(BaseModel):

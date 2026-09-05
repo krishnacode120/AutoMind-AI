@@ -1,5 +1,6 @@
 import { ConnectionState, TelemetrySocketMessage } from "./types";
 import { EventEmitter } from "./events";
+import { API_BASE_URL } from "../api";
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 30000]; // Defined backoff delays
@@ -13,19 +14,29 @@ export class TelemetryWebSocketClient extends EventEmitter {
 
   constructor(vehicleId: number) {
     super();
-    // Assuming backend runs on the same host or dynamically relative
-    // Fallback to local development server if needed
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = window.location.hostname === "localhost" ? "localhost:8000" : window.location.host;
-    this.url = `${protocol}//${host}/api/v1/ws/telemetry/${vehicleId}`;
+    const base = new URL(
+      import.meta.env.VITE_WS_BASE_URL || API_BASE_URL,
+      window.location.origin,
+    );
+    base.protocol =
+      base.protocol === "https:" || base.protocol === "wss:" ? "wss:" : "ws:";
+    this.url = `${base.toString().replace(/\/$/, "")}/ws/telemetry/${vehicleId}`;
   }
 
   public connect() {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
-    this.setState(this.reconnectAttempts === 0 ? ConnectionState.CONNECTING : ConnectionState.RECONNECTING);
+    this.setState(
+      this.reconnectAttempts === 0
+        ? ConnectionState.CONNECTING
+        : ConnectionState.RECONNECTING,
+    );
 
     this.socket = new WebSocket(this.url);
 
@@ -63,6 +74,10 @@ export class TelemetryWebSocketClient extends EventEmitter {
       this.reconnectTimeoutId = null;
     }
     if (this.socket) {
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      this.socket.onopen = null;
+      this.socket.onmessage = null;
       this.socket.close();
       this.socket = null;
     }

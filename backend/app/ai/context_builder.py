@@ -3,9 +3,6 @@
 from collections.abc import Iterator, Mapping
 from typing import Any
 
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
-
 from app.ai.conversation_memory import ConversationMemory
 from app.database.session import SessionLocal
 from app.prediction.predictor_factory import PredictorFactory
@@ -19,6 +16,8 @@ from app.services.alert_service import VehicleAlertService
 from app.services.health_service import VehicleHealthService
 from app.services.maintenance_service import VehicleMaintenanceService
 from app.utils.time_utils import utc_now
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 
 class BONContext(BaseModel, Mapping[str, Any]):
@@ -53,10 +52,12 @@ class ContextBuilder:
         self,
         memory: ConversationMemory | None = None,
         predictor_factory: PredictorFactory | None = None,
+        session_factory: Any = SessionLocal,
     ) -> None:
         """Initialize context builder dependencies."""
         self._memory = memory or ConversationMemory()
         self._predictor_factory = predictor_factory or PredictorFactory()
+        self._session_factory = session_factory
 
     def build(
         self,
@@ -65,7 +66,7 @@ class ContextBuilder:
         session_id: str | None = None,
     ) -> BONContext:
         """Fetch and aggregate context for BON."""
-        with SessionLocal() as db:
+        with self._session_factory() as db:
             vehicle = self._safe_call(self._build_vehicle, db, vehicle_id)
             telemetry = self._safe_call(self._get_latest_telemetry, db, vehicle_id)
             health = self._safe_call(self._build_health, telemetry)
@@ -196,7 +197,7 @@ class ContextBuilder:
         """Run a context step and return None if unavailable."""
         try:
             return func(*args)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
 
 

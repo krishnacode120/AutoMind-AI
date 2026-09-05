@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { TelemetryWebSocketClient } from "../services/websocket/client";
 import { ConnectionState } from "../services/websocket/types";
-import { Telemetry } from "../types/telemetry";
+import type { Telemetry, TelemetryHistory } from "../types/telemetry";
 import { useConnection } from "../contexts/ConnectionContext";
 
 export function useTelemetrySocket(vehicleId: number | null) {
@@ -29,19 +29,30 @@ export function useTelemetrySocket(vehicleId: number | null) {
           telemetry: msg.data,
         });
 
-        // Update telemetry history cache (append and slice to keep last 100)
-        queryClient.setQueryData(["telemetry", "history", vehicleId], (oldData: any) => {
-          if (!oldData) return { vehicle_id: vehicleId, records: [msg.data] };
-          
-          const newRecords = [...oldData.records, msg.data];
-          if (newRecords.length > 100) {
-            newRecords.shift(); // Remove oldest to keep 100
-          }
-          return {
-            ...oldData,
-            records: newRecords,
-          };
-        });
+        queryClient.setQueryData<TelemetryHistory>(
+          ["telemetry", "history", vehicleId],
+          (oldData) => {
+            if (!oldData) return { vehicle_id: vehicleId, records: [msg.data] };
+
+            const newRecords = [
+              msg.data,
+              ...oldData.records.filter((record) => record.id !== msg.data.id),
+            ]
+              .sort(
+                (a, b) =>
+                  Date.parse(b.timestamp) - Date.parse(a.timestamp) ||
+                  b.id - a.id,
+              )
+              .slice(0, 100);
+            return {
+              ...oldData,
+              records: newRecords,
+            };
+          },
+        );
+        for (const key of ["health", "alerts", "maintenance", "prediction"]) {
+          void queryClient.invalidateQueries({ queryKey: [key, vehicleId] });
+        }
       }
     };
 
@@ -60,4 +71,3 @@ export function useTelemetrySocket(vehicleId: number | null) {
 
   return { connectionState, lastMessage };
 }
-

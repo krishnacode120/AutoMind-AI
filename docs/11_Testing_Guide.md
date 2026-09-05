@@ -23,6 +23,19 @@ pytest -q
 - `tests/test_prediction.py`
 - `tests/test_bon.py`
 - `tests/test_websocket.py`
+- `tests/test_workflows.py`: isolated database, API CRUD, simulated drive,
+  diagnostics, BON context/session history, validation and telemetry events
+- `tests/test_ml_pipeline.py`: 10,000-sample dataset acceptance, training,
+  serialization, inference, artifact reload and fallback isolation
+
+## Browser Workflows
+
+Start the backend on port 8000 and Vite on 5173. From `frontend`, run
+`npx playwright install chromium` once, then `npm run test:e2e`.
+To use installed Edge on Windows, set `$env:PLAYWRIGHT_CHANNEL="msedge"`.
+The test verifies CRUD, WebSocket events, all pages, BON conversation isolation,
+reload and clearing, and mobile overflow. It cleans up its own vehicle records
+and captures screenshots in `.runtime/`.
 
 ## CI Expectations
 

@@ -1,33 +1,37 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import Loading from "./components/common/Loading";
 
 import GlobalLayout from "./layout/GlobalLayout";
-import Alerts from "./pages/Alerts";
-import BON from "./pages/BON";
-import Dashboard from "./pages/Dashboard";
-import Health from "./pages/Health";
-import Maintenance from "./pages/Maintenance";
-import Predictions from "./pages/Predictions";
-import Settings from "./pages/Settings";
-import Telemetry from "./pages/Telemetry";
-import Vehicles from "./pages/Vehicles";
+const Alerts = lazy(() => import("./pages/Alerts"));
+const BON = lazy(() => import("./pages/BON"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Health = lazy(() => import("./pages/Health"));
+const Maintenance = lazy(() => import("./pages/Maintenance"));
+const Predictions = lazy(() => import("./pages/Predictions"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Telemetry = lazy(() => import("./pages/Telemetry"));
+const Vehicles = lazy(() => import("./pages/Vehicles"));
 
 function App() {
   return (
-    <Routes>
-      <Route element={<GlobalLayout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/vehicles" element={<Vehicles />} />
-        <Route path="/telemetry" element={<Telemetry />} />
-        <Route path="/health" element={<Health />} />
-        <Route path="/alerts" element={<Alerts />} />
-        <Route path="/maintenance" element={<Maintenance />} />
-        <Route path="/predictions" element={<Predictions />} />
-        <Route path="/bon" element={<BON />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route element={<GlobalLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/telemetry" element={<Telemetry />} />
+          <Route path="/health" element={<Health />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/predictions" element={<Predictions />} />
+          <Route path="/bon" element={<BON />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

@@ -5,11 +5,13 @@ services:
       dockerfile: backend/Dockerfile
     env_file:
       - backend/.env
+    environment:
+      DATABASE_URL: sqlite:////data/automind.db
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./backend/automind.db:/app/automind.db
+      - automind-data:/data
 
   frontend:
     build:
@@ -24,3 +26,6 @@ services:
       - /app/node_modules
     depends_on:
       - backend
+
+volumes:
+  automind-data:

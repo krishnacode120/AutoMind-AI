@@ -28,6 +28,11 @@ docker compose up --build
 
 ## Production Notes
 
+Compose stores SQLite in the `automind-data` named volume at `/data/automind.db`.
+It does not bind-mount a possibly missing host database file. Existing local
+`backend/automind.db` data is not automatically copied to that volume.
+The supplied Compose stack is intended for local development.
+
 - Replace default `SECRET_KEY`.
 - Use managed database for non-local deployment.
 - Add reverse proxy and TLS termination.

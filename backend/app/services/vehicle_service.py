@@ -1,10 +1,10 @@
 """Vehicle service functions."""
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate
+from sqlalchemy import delete, select
+from app.models.telemetry import Telemetry
+from sqlalchemy.orm import Session
 
 
 def create_vehicle(db: Session, vehicle_data: VehicleCreate) -> Vehicle:
@@ -50,5 +50,6 @@ def update_vehicle(
 
 def delete_vehicle(db: Session, vehicle: Vehicle) -> None:
     """Delete a vehicle."""
+    db.execute(delete(Telemetry).where(Telemetry.vehicle_id == vehicle.id))
     db.delete(vehicle)
     db.commit()

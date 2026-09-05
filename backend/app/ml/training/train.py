@@ -8,16 +8,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from sklearn.compose import ColumnTransformer
+from app.ml.training.evaluate import EvaluationResult, evaluate_model
+from app.ml.training.model_registry import ModelRegistry
+from sklearn.feature_extraction import DictVectorizer
+from app.ml.features import (
+    MODEL_FEATURES,
+    NUMERIC_FEATURES,
+    CATEGORICAL_FEATURES,
+    RecordNormalizer,
+)
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-
-from app.ml.training.evaluate import EvaluationResult, evaluate_model
-from app.ml.training.model_registry import ModelRegistry
+from sklearn.preprocessing import StandardScaler
 
 TARGET_COLUMN = "failure"
 DEFAULT_TEST_SIZE = 0.2
@@ -55,20 +60,25 @@ def main() -> None:
     trained_models = train_models(
         x_train=bundle.x_train,
         y_train=bundle.y_train,
-        numeric_features=_numeric_feature_names(bundle.x_train),
-        categorical_features=_categorical_feature_names(bundle.x_train),
+        numeric_features=list(NUMERIC_FEATURES),
+        categorical_features=list(CATEGORICAL_FEATURES),
         random_state=args.random_state,
     )
 
     evaluation_results = evaluate_models(
         trained_models=trained_models,
-        x_test=bundle.x_test,
-        y_test=bundle.y_test,
+        x_test=bundle.x_validation,
+        y_test=bundle.y_validation,
     )
     print_comparison_table(evaluation_results)
 
     best_result = select_best_model(evaluation_results)
     best_model = trained_models[best_result.model_name]
+    test_result = evaluate_models(
+        {best_result.model_name: best_model},
+        bundle.x_test,
+        bundle.y_test,
+    )[0]
 
     registry = ModelRegistry(models_dir)
     artifacts = registry.save_artifacts(
@@ -76,7 +86,7 @@ def main() -> None:
         best_model_name=best_result.model_name,
         feature_names=bundle.feature_names,
         dataset_size=bundle.dataset_size,
-        best_metrics=best_result.metrics.to_dict(),
+        best_metrics=test_result.metrics.to_dict(),
         evaluation_results=evaluation_results,
     )
 
@@ -135,9 +145,16 @@ def load_and_split_dataset(
     if TARGET_COLUMN not in rows[0]:
         raise ValueError(f"Required target column '{TARGET_COLUMN}' missing")
 
-    feature_names = [name for name in rows[0].keys() if name != TARGET_COLUMN]
+    missing = set(MODEL_FEATURES) - rows[0].keys()
+    if missing:
+        raise ValueError(f"Missing runtime features: {sorted(missing)}")
+    feature_names = list(MODEL_FEATURES)
     x_data = [{name: row.get(name) for name in feature_names} for row in rows]
-    y_data = [int(float(row[TARGET_COLUMN])) for row in rows]
+    if any(row[TARGET_COLUMN] not in {"0", "1"} for row in rows):
+        raise ValueError("Failure labels must be binary (0 or 1)")
+    y_data = [int(row[TARGET_COLUMN]) for row in rows]
+    if set(y_data) != {0, 1}:
+        raise ValueError("Training requires both normal and failure samples")
 
     x_train_full, x_test, y_train_full, y_test = train_test_split(
         x_data,
@@ -175,11 +192,6 @@ def train_models(
     random_state: int,
 ) -> dict[str, Pipeline]:
     """Train all required classifier families and return fitted pipelines."""
-    preprocess = build_preprocessor(
-        numeric_features=numeric_features,
-        categorical_features=categorical_features,
-    )
-
     model_factories: dict[str, Any] = {
         "Logistic Regression": LogisticRegression(
             max_iter=1000,
@@ -196,6 +208,7 @@ def train_models(
 
     trained_models: dict[str, Pipeline] = {}
     for model_name, estimator in model_factories.items():
+        preprocess = build_preprocessor(numeric_features, categorical_features)
         pipeline = Pipeline(
             steps=[
                 ("preprocessor", preprocess),
@@ -211,25 +224,15 @@ def train_models(
 def build_preprocessor(
     numeric_features: list[str],
     categorical_features: list[str],
-) -> ColumnTransformer:
+) -> Pipeline:
     """Build reusable preprocessing for mixed feature types."""
-    numeric_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
+    return Pipeline(
+        [
+            ("normalize", RecordNormalizer(numeric_features, categorical_features)),
+            ("vectorize", DictVectorizer(sparse=False)),
+            ("impute", SimpleImputer(strategy="median", keep_empty_features=True)),
+            ("scale", StandardScaler()),
         ]
-    )
-    categorical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
-
-    return ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
-        ],
     )
 
 

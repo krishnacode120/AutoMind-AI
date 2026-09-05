@@ -21,19 +21,25 @@ function TelemetryCharts({ vehicleId }: Props) {
     );
   }
 
-  // TODO: Implement history endpoint data fallback securely. Currently backend might not have it ready.
   if (isError || !data || data.records.length === 0) {
     return (
       <Card className="dashboard-card">
-        <p className="dashboard-card__value--sm">No telemetry history available.</p>
+        <p className="dashboard-card__value--sm">
+          No telemetry history available.
+        </p>
       </Card>
     );
   }
 
-  const { records } = data;
+  const records = [...data.records].sort(
+    (a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp) || a.id - b.id,
+  );
 
   return (
-    <div className="dashboard-row dashboard-row--2" style={{ marginTop: "24px" }}>
+    <div
+      className="dashboard-row dashboard-row--2"
+      style={{ marginTop: "24px" }}
+    >
       <SpeedChart data={records} />
       <RPMChart data={records} />
       <TemperatureChart data={records} />

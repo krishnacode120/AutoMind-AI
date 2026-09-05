@@ -1,15 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { useEffect, useRef, useState } from "react";
 import {
+  clearSession,
   sendMessage as sendBONMessage,
-  type BONResponse,
 } from "../services/bonApi";
 
-const SESSION_STORAGE_KEY = "automind-bon-session-id";
-const MESSAGE_STORAGE_PREFIX = "automind-bon-messages";
-
 export type BONMessageRole = "user" | "assistant" | "error";
-
 export type BONChatMessage = {
   id: string;
   role: BONMessageRole;
@@ -19,158 +14,158 @@ export type BONChatMessage = {
   confidence?: number;
 };
 
-type UseBONResult = {
-  messages: BONChatMessage[];
-  loading: boolean;
-  sessionId: string;
-  lastFailedMessage: string | null;
-  sendMessage: (message: string) => Promise<void>;
-  clearConversation: () => void;
-  retryLastMessage: () => Promise<void>;
-};
-
 function createId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 }
 
-function getStoredSessionId(): string {
-  const storedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-
-  if (storedSessionId) {
-    return storedSessionId;
-  }
-
-  const sessionId = createId();
-  localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
-  return sessionId;
-}
-
-function getMessageStorageKey(sessionId: string): string {
-  return `${MESSAGE_STORAGE_PREFIX}:${sessionId}`;
-}
-
-function loadMessages(sessionId: string): BONChatMessage[] {
-  const storedMessages = localStorage.getItem(getMessageStorageKey(sessionId));
-
-  if (!storedMessages) {
-    return [];
-  }
-
+function storedSession(vehicleId: number | null): string {
+  const key = `automind-bon-session:${vehicleId}`;
   try {
-    return JSON.parse(storedMessages) as BONChatMessage[];
+    const stored = localStorage.getItem(key);
+    if (stored) return stored;
+    const id = createId();
+    localStorage.setItem(key, id);
+    return id;
+  } catch {
+    return createId();
+  }
+}
+
+function loadMessages(session: string): BONChatMessage[] {
+  try {
+    const messages: unknown = JSON.parse(
+      localStorage.getItem(`automind-bon-messages:${session}`) ?? "[]",
+    );
+    return Array.isArray(messages)
+      ? messages.filter(
+          (item) =>
+            item &&
+            typeof item.id === "string" &&
+            typeof item.content === "string" &&
+            typeof item.timestamp === "string" &&
+            ["user", "assistant", "error"].includes(item.role),
+        )
+      : [];
   } catch {
     return [];
   }
 }
 
-function createUserMessage(content: string): BONChatMessage {
-  return {
-    id: createId(),
-    role: "user",
-    content,
-    timestamp: new Date().toISOString(),
-  };
-}
-
-function createAssistantMessage(response: BONResponse): BONChatMessage {
-  return {
-    id: createId(),
-    role: "assistant",
-    content: response.answer,
-    timestamp: response.timestamp,
-    intent: response.intent,
-    confidence: response.confidence,
-  };
-}
-
-function createErrorMessage(): BONChatMessage {
-  return {
-    id: createId(),
-    role: "error",
-    content:
-      "BON is having trouble responding right now. Check that the backend is running, then try again.",
-    timestamp: new Date().toISOString(),
-  };
-}
-
-export function useBON(vehicleId: number | null): UseBONResult {
-  const [sessionId, setSessionId] = useState(getStoredSessionId);
-  const [messages, setMessages] = useState<BONChatMessage[]>(() =>
-    loadMessages(getStoredSessionId()),
-  );
+export function useBON(vehicleId: number | null) {
+  const [sessionId, setSessionId] = useState(() => storedSession(vehicleId));
+  const [messages, setMessages] = useState(() => loadMessages(sessionId));
   const [loading, setLoading] = useState(false);
   const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(
     null,
   );
-
-  const messageStorageKey = useMemo(
-    () => getMessageStorageKey(sessionId),
-    [sessionId],
-  );
-
+  const busy = useRef(false);
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => pending.current?.abort(), []);
   useEffect(() => {
-    localStorage.setItem(messageStorageKey, JSON.stringify(messages));
-  }, [messageStorageKey, messages]);
-
-  const sendMessage = useCallback(
-    async (message: string) => {
-      const trimmedMessage = message.trim();
-
-      if (!trimmedMessage || loading || !vehicleId) {
-        return;
-      }
-
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        createUserMessage(trimmedMessage),
-      ]);
-      setLoading(true);
-      setLastFailedMessage(null);
-
-      try {
-        const response = await sendBONMessage({
-          vehicle_id: vehicleId,
-          message: trimmedMessage,
-          session_id: sessionId,
-        });
-
-        setMessages((currentMessages) => [
-          ...currentMessages,
-          createAssistantMessage(response),
-        ]);
-      } catch {
-        setLastFailedMessage(trimmedMessage);
-        setMessages((currentMessages) => [
-          ...currentMessages,
-          createErrorMessage(),
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [loading, sessionId, vehicleId],
-  );
-
-  const clearConversation = useCallback(() => {
-    localStorage.removeItem(messageStorageKey);
-
-    const nextSessionId = createId();
-    localStorage.setItem(SESSION_STORAGE_KEY, nextSessionId);
-    setSessionId(nextSessionId);
-    setMessages([]);
-    setLastFailedMessage(null);
-  }, [messageStorageKey]);
-
-  const retryLastMessage = useCallback(async () => {
-    if (lastFailedMessage) {
-      await sendMessage(lastFailedMessage);
+    try {
+      localStorage.setItem(
+        `automind-bon-messages:${sessionId}`,
+        JSON.stringify(messages.slice(-200)),
+      );
+    } catch {
+      /* Chat still works when local storage is unavailable. */
     }
-  }, [lastFailedMessage, sendMessage]);
+  }, [messages, sessionId]);
 
+  async function sendMessage(message: string, retry = false): Promise<void> {
+    const content = message.trim();
+    if (!content || busy.current || !vehicleId) return;
+    busy.current = true;
+    setLoading(true);
+    setLastFailedMessage(null);
+    const controller = new AbortController();
+    pending.current = controller;
+    setMessages((current) =>
+      retry
+        ? current.filter((item) => item.role !== "error")
+        : [
+            ...current,
+            {
+              id: createId(),
+              role: "user",
+              content,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+    );
+    try {
+      const response = await sendBONMessage(
+        { vehicle_id: vehicleId, message: content, session_id: sessionId },
+        controller.signal,
+      );
+      setMessages((current) => [
+        ...current,
+        {
+          id: createId(),
+          role: "assistant",
+          content: response.answer,
+          timestamp: response.timestamp,
+          intent: response.intent,
+          confidence: response.confidence,
+        },
+      ]);
+    } catch {
+      if (!controller.signal.aborted) {
+        setLastFailedMessage(content);
+        setMessages((current) => [
+          ...current,
+          {
+            id: createId(),
+            role: "error",
+            content: "BON could not respond. Please try again.",
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
+    } finally {
+      busy.current = false;
+      setLoading(false);
+    }
+  }
+
+  async function clearConversation(): Promise<void> {
+    if (busy.current) return;
+    busy.current = true;
+    setLoading(true);
+    try {
+      await clearSession(sessionId);
+      const next = createId();
+      try {
+        localStorage.removeItem(`automind-bon-messages:${sessionId}`);
+        localStorage.setItem(`automind-bon-session:${vehicleId}`, next);
+      } catch {
+        /* Storage is optional. */
+      }
+      setSessionId(next);
+      setMessages([]);
+      setLastFailedMessage(null);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        {
+          id: createId(),
+          role: "error",
+          content: "Conversation could not be cleared. Please try again.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      busy.current = false;
+      setLoading(false);
+    }
+  }
+
+  async function retryLastMessage(): Promise<void> {
+    if (lastFailedMessage) await sendMessage(lastFailedMessage, true);
+  }
   return {
     messages,
     loading,

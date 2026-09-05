@@ -1,13 +1,13 @@
 """Telemetry service functions."""
 
-from sqlalchemy import delete, select
-from sqlalchemy.orm import Session
-
 from app.core.exceptions import GlobalException
 from app.models.telemetry import Telemetry
 from app.models.vehicle import Vehicle
 from app.schemas.telemetry import TelemetryCreate
 from app.utils.time_utils import utc_now
+from app.events.telemetry_events import publish_telemetry
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 
 def _ensure_vehicle_exists(db: Session, vehicle_id: int) -> None:
@@ -31,6 +31,7 @@ def create_telemetry(
     db.add(telemetry)
     db.commit()
     db.refresh(telemetry)
+    publish_telemetry(telemetry)
     return telemetry
 
 

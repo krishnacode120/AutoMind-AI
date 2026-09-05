@@ -1,12 +1,11 @@
 """Persistence engine for simulation snapshots."""
 
-from sqlalchemy.orm import Session
-
 from app.models.telemetry import Telemetry
 from app.models.vehicle import Vehicle
 from app.simulator.simulation_controller import SimulationController
 from app.simulator.simulation_models import SimulationSnapshot
-
+from sqlalchemy.orm import Session
+from app.events.telemetry_events import publish_telemetry
 
 DEFAULT_FUEL_CONSUMPTION = 0.0
 
@@ -24,9 +23,6 @@ class PersistenceEngine:
         snapshot: SimulationSnapshot,
     ) -> Telemetry:
         """Save one simulation snapshot as a telemetry record."""
-        from app.events.event_bus import event_bus
-        from app.events.telemetry_events import TELEMETRY_CREATED
-
         vehicle = self._get_vehicle_or_raise(vehicle_id)
         telemetry = self._build_telemetry(vehicle, snapshot)
 
@@ -35,7 +31,7 @@ class PersistenceEngine:
         self._db.refresh(telemetry)
 
         # Publish the new telemetry record to the event bus
-        event_bus.publish(TELEMETRY_CREATED, telemetry)
+        publish_telemetry(telemetry)
 
         return telemetry
 
@@ -45,13 +41,9 @@ class PersistenceEngine:
         snapshots: list[SimulationSnapshot],
     ) -> list[Telemetry]:
         """Save multiple simulation snapshots and commit once."""
-        from app.events.event_bus import event_bus
-        from app.events.telemetry_events import TELEMETRY_CREATED
-
         vehicle = self._get_vehicle_or_raise(vehicle_id)
         telemetry_records = [
-            self._build_telemetry(vehicle, snapshot)
-            for snapshot in snapshots
+            self._build_telemetry(vehicle, snapshot) for snapshot in snapshots
         ]
 
         self._db.add_all(telemetry_records)
@@ -59,7 +51,7 @@ class PersistenceEngine:
 
         for telemetry in telemetry_records:
             self._db.refresh(telemetry)
-            event_bus.publish(TELEMETRY_CREATED, telemetry)
+            publish_telemetry(telemetry)
 
         return telemetry_records
 
@@ -77,6 +69,7 @@ class PersistenceEngine:
         snapshot: SimulationSnapshot,
     ) -> Telemetry:
         """Convert a simulation snapshot into a Telemetry ORM object."""
+        vehicle.odometer += snapshot.distance_delta
         return Telemetry(
             vehicle_id=vehicle.id,
             timestamp=snapshot.timestamp,
@@ -98,7 +91,7 @@ class PersistenceEngine:
             throttle_position=snapshot.throttle_position,
             gear=snapshot.gear,
             trip_distance=snapshot.distance_delta,
-            odometer=vehicle.odometer + snapshot.distance_delta,
+            odometer=vehicle.odometer,
             fuel_consumption=DEFAULT_FUEL_CONSUMPTION,
         )
 

@@ -2,15 +2,15 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
 from app.ai.bon import BONAssistant
+from app.ai.context_builder import ContextBuilder
+from contextlib import nullcontext
 from app.ai.types import BONRequest, BONResponse
 from app.database.session import get_db
 from app.services.vehicle_service import get_vehicle
 from app.utils.helpers import success_response
-
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/bon", tags=["BON"])
 _bon_assistant = BONAssistant()
@@ -35,7 +35,14 @@ async def chat(
                 detail="Invalid vehicle",
             )
 
-        return assistant.process(request)
+        request_assistant = BONAssistant(
+            context_builder=ContextBuilder(
+                memory=assistant.memory,
+                session_factory=lambda: nullcontext(db),
+            )
+        )
+        request_assistant.memory = assistant.memory
+        return request_assistant.process(request)
     except HTTPException:
         raise
     except Exception as exc:
@@ -98,4 +105,3 @@ async def bon_health() -> dict[str, str]:
 def _session_exists(assistant: BONAssistant, session_id: str) -> bool:
     """Return whether a conversation session exists."""
     return assistant.memory.has_session(session_id)
-
