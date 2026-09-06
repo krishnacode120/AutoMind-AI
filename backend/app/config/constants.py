@@ -2,7 +2,6 @@
 
 from app.config.settings import settings
 
-
 API_PREFIX = settings.API_PREFIX
 API_VERSION = settings.API_VERSION
 PROJECT_NAME = settings.APP_NAME

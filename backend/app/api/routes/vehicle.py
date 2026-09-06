@@ -6,7 +6,7 @@ from app.core.exceptions import GlobalException
 from app.database.session import get_db
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
 from app.services import vehicle_service
-from app.services.simulation_service import simulate_drive
+from app.services.simulation_service import SimulationScenario, simulate_drive
 from fastapi import Query
 from app.utils.helpers import success_response
 from fastapi import APIRouter, Depends, status
@@ -19,13 +19,14 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 def run_sample_drive(
     vehicle_id: int,
     samples: int = Query(default=60, ge=1, le=300),
+    scenario: SimulationScenario = "normal",
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Generate a finite simulated drive for the selected vehicle."""
-    records = simulate_drive(db, vehicle_id, samples)
+    records = simulate_drive(db, vehicle_id, samples, scenario)
     return success_response(
         message="Simulated drive recorded",
-        data={"vehicle_id": vehicle_id, "samples": len(records)},
+        data={"vehicle_id": vehicle_id, "samples": len(records), "scenario": scenario},
     )
 
 
@@ -49,10 +50,12 @@ async def create_vehicle(
 
 @router.get("")
 async def list_vehicles(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=1000),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """List vehicles."""
-    vehicles = vehicle_service.list_vehicles(db)
+    vehicles = vehicle_service.list_vehicles(db, skip=skip, limit=limit)
     return success_response(
         message="Vehicles retrieved successfully",
         data=[_vehicle_payload(vehicle) for vehicle in vehicles],

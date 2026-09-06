@@ -2,10 +2,9 @@
 
 from typing import Any
 
+from app.config.settings import settings
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-
-from app.config.settings import settings
 
 
 def build_openapi_schema(app: FastAPI) -> dict[str, Any]:

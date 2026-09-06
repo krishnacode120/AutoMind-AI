@@ -1,11 +1,8 @@
-fastapi
-pydantic-settings
-sqlalchemy
-alembic
-uvicorn[standard]
-scikit-learn
-joblib
-pytest
-pytest-asyncio
-httpx2
-ruff
+# Runtime dependencies, pinned to the verified rebuild environment.
+fastapi==0.139.0
+pydantic-settings==2.14.2
+sqlalchemy==2.0.51
+alembic==1.18.5
+uvicorn[standard]==0.50.2
+scikit-learn==1.9.0
+joblib==1.5.3

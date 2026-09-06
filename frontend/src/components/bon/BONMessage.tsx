@@ -32,7 +32,11 @@ function BONMessage({ message, showRetry = false, onRetry }: BONMessageProps) {
           </span>
         )}
         {showRetry && onRetry && (
-          <button className="bon-message__retry" type="button" onClick={onRetry}>
+          <button
+            className="bon-message__retry"
+            type="button"
+            onClick={onRetry}
+          >
             <RotateCw size={14} />
             Retry
           </button>

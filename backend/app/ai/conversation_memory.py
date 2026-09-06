@@ -1,42 +1,68 @@
-"""Conversation memory module."""
+"""Bounded, expiring conversation state for a single application process."""
 
-from typing import Any
 import uuid
+from collections import OrderedDict
+from threading import RLock
+from time import monotonic
+from typing import Any
 
 
 class ConversationMemory:
-    """Manages short-term conversation state using in-memory storage."""
+    """Keep recent messages without unbounded process memory growth."""
 
-    def __init__(self) -> None:
-        """Initialize the in-memory session dictionary."""
-        self._sessions: dict[str, list[dict[str, Any]]] = {}
+    def __init__(
+        self,
+        max_sessions: int = 1000,
+        max_messages: int = 100,
+        ttl_seconds: float = 3600,
+    ) -> None:
+        if max_sessions < 1 or max_messages < 1 or ttl_seconds <= 0:
+            raise ValueError("Memory limits must be positive")
+        self._sessions: OrderedDict[str, list[dict[str, Any]]] = OrderedDict()
+        self._updated: dict[str, float] = {}
+        self._lock = RLock()
+        self._max_sessions = max_sessions
+        self._max_messages = max_messages
+        self._ttl = ttl_seconds
+
+    def _prune(self) -> None:
+        now = monotonic()
+        for session in list(self._sessions):
+            if now - self._updated[session] >= self._ttl:
+                self.clear_session(session)
+        while len(self._sessions) > self._max_sessions:
+            session, _ = self._sessions.popitem(last=False)
+            self._updated.pop(session, None)
 
     def create_session(self) -> str:
-        """Create a new session ID and initialize its history."""
         session_id = str(uuid.uuid4())
-        self._sessions[session_id] = []
+        with self._lock:
+            self._sessions[session_id] = []
+            self._updated[session_id] = monotonic()
+            self._prune()
         return session_id
 
     def append_message(self, session_id: str, role: str, content: str) -> None:
-        """Append a message to a session's history."""
-        if session_id not in self._sessions:
-            self._sessions[session_id] = []
-            
-        self._sessions[session_id].append({
-            "role": role,
-            "content": content
-        })
+        with self._lock:
+            self._prune()
+            history = self._sessions.setdefault(session_id, [])
+            history.append({"role": role, "content": content})
+            del history[: -self._max_messages]
+            self._updated[session_id] = monotonic()
+            self._sessions.move_to_end(session_id)
+            self._prune()
 
     def get_history(self, session_id: str) -> list[dict[str, Any]]:
-        """Retrieve the message history for a session."""
-        return self._sessions.get(session_id, [])
+        with self._lock:
+            self._prune()
+            return [dict(message) for message in self._sessions.get(session_id, [])]
 
     def has_session(self, session_id: str) -> bool:
-        """Return whether a session exists."""
-        return session_id in self._sessions
+        with self._lock:
+            self._prune()
+            return session_id in self._sessions
 
     def clear_session(self, session_id: str) -> None:
-        """Clear the message history for a specific session."""
-        if session_id in self._sessions:
-            del self._sessions[session_id]
-
+        with self._lock:
+            self._sessions.pop(session_id, None)
+            self._updated.pop(session_id, None)

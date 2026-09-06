@@ -8,7 +8,6 @@ from app.schemas.health import HealthReport
 from app.schemas.maintenance import MaintenanceReport
 from app.schemas.prediction import PredictionResult
 
-
 TELEMETRY_FEATURES: tuple[str, ...] = (
     "vehicle_state",
     "driving_mode",

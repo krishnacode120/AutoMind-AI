@@ -2,9 +2,6 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
-
 from app.database.session import get_db
 from app.schemas.telemetry import (
     LatestTelemetry,
@@ -14,7 +11,8 @@ from app.schemas.telemetry import (
 )
 from app.services import telemetry_service
 from app.utils.helpers import success_response
-
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/telemetry", tags=["Telemetry"])
 
@@ -57,10 +55,12 @@ async def get_latest(
 @router.get("/history/{vehicle_id}")
 async def get_history(
     vehicle_id: int,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=1000),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Return telemetry history for a vehicle."""
-    records = telemetry_service.get_history(db, vehicle_id)
+    records = telemetry_service.get_history(db, vehicle_id, skip=skip, limit=limit)
     payload = TelemetryHistory(
         vehicle_id=vehicle_id,
         records=records,

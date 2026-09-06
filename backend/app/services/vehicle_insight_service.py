@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass
 
-from sqlalchemy.orm import Session
-
 from app.core.exceptions import GlobalException
 from app.prediction.predictor_factory import PredictorFactory
 from app.schemas.alert import AlertReport
@@ -14,6 +12,7 @@ from app.services import telemetry_service
 from app.services.alert_service import VehicleAlertService
 from app.services.health_service import VehicleHealthService
 from app.services.maintenance_service import VehicleMaintenanceService
+from sqlalchemy.orm import Session
 
 
 @dataclass(frozen=True)

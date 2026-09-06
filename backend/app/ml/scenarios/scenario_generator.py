@@ -9,7 +9,6 @@ from app.ml.scenarios.driving_profiles import (
 )
 from app.ml.scenarios.scenario import FaultType, Scenario
 
-
 DEFAULT_FAULT_PROBABILITIES: dict[FaultType, float] = {
     FaultType.LOW_FUEL: 0.02,
     FaultType.LOW_BATTERY: 0.02,

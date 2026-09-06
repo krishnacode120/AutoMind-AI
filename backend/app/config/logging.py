@@ -2,7 +2,6 @@
 
 import logging
 
-
 LOGGER_NAME = "automind"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 

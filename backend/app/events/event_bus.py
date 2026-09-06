@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class EventBus:
     """Lightweight Event Bus for pub/sub decoupled architecture."""
-    
+
     def __init__(self) -> None:
         self.subscribers: dict[str, list[Callable[[Any], Any]]] = {}
         self.loop: asyncio.AbstractEventLoop | None = None

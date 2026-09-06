@@ -8,12 +8,12 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "AutoMind AI"
     APP_DESCRIPTION: str = "AI Powered Vehicle Assistant"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "2.0.0"
     API_PREFIX: str = "/api"
     API_VERSION: str = "v1"
     AI_NAME: str = "BON"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
     HOST: str = "127.0.0.1"
     PORT: int = 8000
     DATABASE_URL: str = "sqlite:///automind.db"

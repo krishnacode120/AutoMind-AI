@@ -1,33 +1,87 @@
-import PageHeader from "../components/common/PageHeader";
-import Card from "../components/common/Card";
+import VehicleWorkspace from "../components/common/VehicleWorkspace";
 import Loading from "../components/common/Loading";
-import { useHealth } from "../hooks/useHealth";
 import { usePrimaryVehicle } from "../hooks/usePrimaryVehicle";
+import { useInsights } from "../hooks/useInsights";
 
-function Health() {
-  const { vehicle, vehicleId, isLoading: vehiclesLoading } = usePrimaryVehicle();
-  const { data, isLoading, isError } = useHealth(vehicleId ?? 0);
-
+export default function Health() {
+  const { vehicleId } = usePrimaryVehicle();
+  const query = useInsights(vehicleId ?? 0);
+  const data = query.data?.health;
   return (
-    <div className="resource-page">
-      <PageHeader title="Health" subtitle="Current deterministic vehicle health assessment" />
-      {(vehiclesLoading || isLoading) && <Loading />}
-      {!vehiclesLoading && !vehicle && <Card className="resource-card"><p className="resource-empty">Add a vehicle to calculate health.</p></Card>}
-      {isError && <Card className="resource-card"><p className="resource-empty">Health data is unavailable until telemetry is recorded.</p></Card>}
-      {data && (
-        <Card className="resource-card">
-          <div className="health-summary"><strong>{data.health_score}%</strong><span>{data.health_status}</span></div>
-          <div className="health-card__bar-track"><div className="health-card__bar-fill" style={{ width: `${data.health_score}%` }} /></div>
-          <section className="report-section"><h2>Recommendations</h2><ReportList items={data.recommendations} empty="No maintenance recommendations." /></section>
-          <section className="report-section"><h2>Penalties</h2><ReportList items={Object.entries(data.penalties).filter(([, value]) => value > 0).map(([name, value]) => `${name.replace("_", " ")}: -${value}`)} empty="No active health penalties." /></section>
-        </Card>
+    <VehicleWorkspace
+      title="Health"
+      subtitle="Understand the condition of every essential system."
+    >
+      {query.isLoading && <Loading />}
+      {query.isError && (
+        <p role="alert">
+          Health could not be loaded.{" "}
+          <button className="text-button" onClick={() => query.refetch()}>
+            Retry
+          </button>
+        </p>
       )}
-    </div>
+      {data && (
+        <>
+          <section className="card resource-card">
+            <div className="health-summary">
+              <strong>
+                {data.health_score}
+                <small>/100</small>
+              </strong>
+              <span className="health-status">{data.health_status}</span>
+            </div>
+            <div className="health-card__bar-track">
+              <div
+                className="health-card__bar-fill"
+                style={{
+                  width: `${data.health_score}%`,
+                  background:
+                    data.health_score < 75
+                      ? "var(--color-warning)"
+                      : "var(--color-success)",
+                }}
+              />
+            </div>
+            <p className="report-summary">
+              A rule-based assessment of the latest reading, across seven
+              vehicle systems.
+            </p>
+          </section>
+          <div className="system-grid">
+            {Object.entries(data.penalties).map(([name, penalty]) => (
+              <section className="system-card card" key={name}>
+                <span
+                  className={"status-dot " + (penalty > 0 ? "warning-dot" : "")}
+                />
+                <h2>{name.replaceAll("_", " ")}</h2>
+                <strong>
+                  {penalty > 0 ? "Needs attention" : "Within range"}
+                </strong>
+                <span>
+                  {penalty > 0
+                    ? `−${penalty} health points`
+                    : "No health penalty"}
+                </span>
+              </section>
+            ))}
+          </div>
+          <section className="card resource-card">
+            <h2>Recommended next steps</h2>
+            {data.recommendations.length ? (
+              <ul className="report-list">
+                {data.recommendations.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="resource-empty">
+                No immediate actions suggested by the latest reading.
+              </p>
+            )}
+          </section>
+        </>
+      )}
+    </VehicleWorkspace>
   );
 }
-
-function ReportList({ items, empty }: { items: string[]; empty: string }) {
-  return items.length ? <ul className="report-list">{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p className="resource-empty">{empty}</p>;
-}
-
-export default Health;

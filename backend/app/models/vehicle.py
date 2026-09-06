@@ -3,11 +3,10 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Float, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
-
 from app.database.base import Base
 from app.utils.time_utils import utc_now
+from sqlalchemy import DateTime, Float, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Vehicle(Base):

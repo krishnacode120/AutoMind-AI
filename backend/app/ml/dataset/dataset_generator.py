@@ -26,7 +26,6 @@ from app.simulator.simulation_models import SimulationSnapshot
 from app.simulator.state_machine import VehicleStateMachine
 from app.utils.time_utils import utc_now
 
-
 DEFAULT_DATASET_SIZE = 10_000
 DEFAULT_VEHICLE_ID = 1
 DEFAULT_INTERVAL_SECONDS = 0.0

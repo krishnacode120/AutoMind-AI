@@ -1,7 +1,6 @@
 """Tests for WebSocket connection manager behavior."""
 
 import pytest
-
 from app.websocket.connection_manager import ConnectionManager
 
 

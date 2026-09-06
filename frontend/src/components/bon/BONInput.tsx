@@ -26,7 +26,11 @@ function BONInput({ disabled = false, onSend }: BONInputProps) {
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.nativeEvent.isComposing
+    ) {
       event.preventDefault();
       submitMessage();
     }
@@ -38,6 +42,7 @@ function BONInput({ disabled = false, onSend }: BONInputProps) {
         aria-label="Message BON"
         disabled={disabled}
         rows={1}
+        maxLength={4000}
         placeholder="Ask BON about your vehicle..."
         value={message}
         onChange={(event) => setMessage(event.target.value)}

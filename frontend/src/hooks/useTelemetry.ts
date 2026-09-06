@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLatestTelemetry, getTelemetryHistory } from "../services/telemetryApi";
+import {
+  getLatestTelemetry,
+  getTelemetryHistory,
+} from "../services/telemetryApi";
 
 export function useLatestTelemetry(vehicleId: number) {
   return useQuery({
@@ -16,4 +19,3 @@ export function useTelemetryHistory(vehicleId: number) {
     enabled: !!vehicleId,
   });
 }
-

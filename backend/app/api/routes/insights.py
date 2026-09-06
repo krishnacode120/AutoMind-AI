@@ -2,13 +2,11 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
 from app.database.session import get_db
 from app.services.vehicle_insight_service import VehicleInsightService
 from app.utils.helpers import success_response
-
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/vehicles/{vehicle_id}", tags=["Vehicle Insights"])
 
@@ -16,6 +14,21 @@ router = APIRouter(prefix="/vehicles/{vehicle_id}", tags=["Vehicle Insights"])
 def _insights(db: Session, vehicle_id: int):
     """Build current diagnostic reports for a vehicle."""
     return VehicleInsightService().build(db, vehicle_id)
+
+
+@router.get("/insights")
+def get_vehicle_insights(
+    vehicle_id: int, db: Session = Depends(get_db)
+) -> dict[str, Any]:
+    """Calculate dashboard reports together from one telemetry snapshot."""
+    insights = _insights(db, vehicle_id)
+    return success_response(
+        message="Vehicle insights retrieved successfully",
+        data={
+            name: getattr(insights, name).model_dump(mode="json")
+            for name in ("health", "alerts", "maintenance", "prediction")
+        },
+    )
 
 
 @router.get("/health")

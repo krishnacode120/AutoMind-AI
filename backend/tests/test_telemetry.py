@@ -1,8 +1,7 @@
 """Tests for telemetry schema constraints."""
 
-from pydantic import ValidationError
-
 from app.schemas.telemetry import TelemetryCreate
+from pydantic import ValidationError
 
 
 def test_telemetry_create_accepts_valid_payload() -> None:

@@ -141,3 +141,68 @@ def test_missing_vehicle_invalid_inputs_and_docs(api_client):
     )
     for path in ("/docs", "/redoc", "/api/v1/health"):
         assert client.get(path).status_code == 200
+
+
+@pytest.mark.parametrize(
+    "scenario,alert_type",
+    [
+        ("overheating", "HIGH_ENGINE_TEMP"),
+        ("low_fuel", "LOW_FUEL"),
+        ("worn_brakes", "HIGH_BRAKE_WEAR"),
+    ],
+)
+def test_scenarios_feed_consistent_insights(api_client, scenario, alert_type):
+    client, _ = api_client
+    vehicle_id = create_vehicle(client)
+    base = f"/api/v1/vehicles/{vehicle_id}"
+    assert client.get(base + "/insights").status_code == 404
+    response = client.post(base + f"/simulation?scenario={scenario}&samples=60")
+    assert response.status_code == 201, response.text
+    assert response.json()["data"]["scenario"] == scenario
+    reports = client.get(base + "/insights").json()["data"]
+    assert set(reports) == {"health", "alerts", "maintenance", "prediction"}
+    assert alert_type in {alert["type"] for alert in reports["alerts"]["alerts"]}
+    assert reports["health"]["health_score"] < 100
+    assert reports["maintenance"]["task_count"] > 0
+    assert (
+        client.get(base + "/health").json()["data"]["health_score"]
+        == reports["health"]["health_score"]
+    )
+    assert client.post(base + "/simulation?scenario=invalid").status_code == 422
+
+
+def test_history_pagination_and_bounds(api_client):
+    client, _ = api_client
+    vehicle_id = create_vehicle(client, name="  Paged car  ")
+    assert (
+        client.get(f"/api/v1/vehicles/{vehicle_id}").json()["data"]["name"]
+        == "Paged car"
+    )
+    client.post(f"/api/v1/vehicles/{vehicle_id}/simulation?samples=60")
+    path = f"/api/v1/telemetry/history/{vehicle_id}"
+    first = client.get(path + "?skip=0&limit=20").json()["data"]["records"]
+    second = client.get(path + "?skip=20&limit=20").json()["data"]["records"]
+    assert len(first) == len(second) == 20
+    assert not {row["id"] for row in first} & {row["id"] for row in second}
+    assert client.get(path + "?skip=60").json()["data"]["records"] == []
+    for params in ("skip=-1", "limit=0", "limit=1001"):
+        assert client.get(path + "?" + params).status_code == 422
+        assert client.get("/api/v1/vehicles?" + params).status_code == 422
+
+
+def test_timezone_normalization_keeps_latest_order_correct(api_client):
+    client, _ = api_client
+    vehicle_id = create_vehicle(client)
+    client.post(f"/api/v1/vehicles/{vehicle_id}/simulation?samples=1")
+    path = f"/api/v1/telemetry/latest/{vehicle_id}"
+    record = client.get(path).json()["data"]["telemetry"]
+    client.delete(f"/api/v1/telemetry/history/{vehicle_id}")
+    record["timestamp"] = "2026-01-01T10:30:00+05:30"
+    earlier = client.post("/api/v1/telemetry", json=record)
+    assert earlier.status_code == 201
+    record["timestamp"] = "2026-01-01T06:00:00Z"
+    later = client.post("/api/v1/telemetry", json=record)
+    assert later.status_code == 201
+    latest = client.get(path).json()["data"]["telemetry"]
+    assert latest["id"] == later.json()["data"]["id"]
+    assert latest["timestamp"].endswith("+00:00")

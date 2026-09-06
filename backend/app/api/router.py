@@ -1,9 +1,8 @@
 """API router registration."""
 
-from fastapi import APIRouter
-
 from app.api.routes import bon, health, insights, system, telemetry, vehicle, ws
 from app.core.version import API_PREFIX
+from fastapi import APIRouter
 
 router = APIRouter(prefix=API_PREFIX)
 router.include_router(bon.router)
@@ -13,6 +12,6 @@ router.include_router(system.router)
 router.include_router(telemetry.router)
 router.include_router(vehicle.router)
 
-# Include websocket without prefixing if necessary, but here we'll just add it to the main router.
-# So it will be at /api/v1/ws/telemetry/{vehicle_id}
+# Include websocket without prefixing if necessary.
+# It will be at /api/v1/ws/telemetry/{vehicle_id}
 router.include_router(ws.router)

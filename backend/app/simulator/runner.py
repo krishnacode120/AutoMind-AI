@@ -7,7 +7,6 @@ from app.simulator.persistence_engine import PersistenceEngine
 from app.simulator.simulation_controller import SimulationController
 from app.simulator.simulation_models import SimulationSnapshot
 
-
 PAUSED_SLEEP_SECONDS = 0.1
 DEFAULT_INTERVAL_SECONDS = 1.0
 

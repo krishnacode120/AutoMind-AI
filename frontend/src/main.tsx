@@ -4,11 +4,13 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import App from "./App";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ConnectionProvider } from "./contexts/ConnectionContext";
 import { VehicleProvider } from "./contexts/VehicleContext";
 import "./styles/global.css";
 import "./styles/workflows.css";
+import "./styles/workspace.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +25,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         <ConnectionProvider>
           <VehicleProvider>
             <BrowserRouter>
-              <App />
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
             </BrowserRouter>
           </VehicleProvider>
         </ConnectionProvider>

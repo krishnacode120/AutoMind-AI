@@ -1,11 +1,9 @@
 """Health and service status routes."""
 
-from fastapi import APIRouter
-
 from app.config.settings import settings
 from app.core.version import AI_NAME, API_VERSION, PROJECT_NAME, PROJECT_VERSION
 from app.utils.time_utils import utc_now_iso
-
+from fastapi import APIRouter
 
 router = APIRouter(tags=["Health"])
 

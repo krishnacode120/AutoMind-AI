@@ -34,4 +34,3 @@ export interface TelemetryHistory {
   vehicle_id: number;
   records: Telemetry[];
 }
-

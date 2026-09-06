@@ -1,11 +1,10 @@
 """Middleware registration for the FastAPI application."""
 
+from app.config.settings import settings
+from app.core.request_id import RequestIDMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-
-from app.config.settings import settings
-from app.core.request_id import RequestIDMiddleware
 
 
 def configure_middleware(app: FastAPI) -> None:

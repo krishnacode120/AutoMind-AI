@@ -3,8 +3,14 @@ import type { ApiResponse } from "../types/common";
 import type { Vehicle, VehicleCreate } from "../types/vehicle";
 
 export async function getVehicles(): Promise<Vehicle[]> {
-  const response = await api.get<ApiResponse<Vehicle[]>>("/vehicles");
-  return response.data.data;
+  const vehicles: Vehicle[] = [];
+  for (let skip = 0; ; skip += 1000) {
+    const response = await api.get<ApiResponse<Vehicle[]>>("/vehicles", {
+      params: { skip, limit: 1000 },
+    });
+    vehicles.push(...response.data.data);
+    if (response.data.data.length < 1000) return vehicles;
+  }
 }
 
 export async function getVehicle(vehicleId: number): Promise<Vehicle> {

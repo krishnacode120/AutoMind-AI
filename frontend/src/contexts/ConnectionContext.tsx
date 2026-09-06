@@ -6,10 +6,18 @@ type ConnectionContextType = {
   setConnectionState: (state: ConnectionState) => void;
 };
 
-const ConnectionContext = createContext<ConnectionContextType | undefined>(undefined);
+const ConnectionContext = createContext<ConnectionContextType | undefined>(
+  undefined,
+);
 
-export function ConnectionProvider({ children }: { children: React.ReactNode }) {
-  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
+export function ConnectionProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [connectionState, setConnectionState] = useState<ConnectionState>(
+    ConnectionState.DISCONNECTED,
+  );
 
   return (
     <ConnectionContext.Provider value={{ connectionState, setConnectionState }}>

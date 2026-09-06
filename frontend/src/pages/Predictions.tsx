@@ -1,36 +1,60 @@
-import PageHeader from "../components/common/PageHeader";
-import Card from "../components/common/Card";
+import VehicleWorkspace from "../components/common/VehicleWorkspace";
 import Loading from "../components/common/Loading";
-import { usePrediction } from "../hooks/usePrediction";
 import { usePrimaryVehicle } from "../hooks/usePrimaryVehicle";
-
-function Predictions() {
-  const { vehicle, vehicleId, isLoading: vehiclesLoading } = usePrimaryVehicle();
-  const { data, isLoading, isError } = usePrediction(vehicleId ?? 0);
-
+import { useInsights } from "../hooks/useInsights";
+export default function Predictions() {
+  const { vehicleId } = usePrimaryVehicle();
+  const query = useInsights(vehicleId ?? 0);
+  const data = query.data?.prediction;
   return (
-    <div className="resource-page">
-      <PageHeader title="Predictions" subtitle="Failure risk from the current vehicle condition" />
-      {(vehiclesLoading || isLoading) && <Loading />}
-      {!vehiclesLoading && !vehicle && <Card className="resource-card"><p className="resource-empty">Add a vehicle to review prediction results.</p></Card>}
-      {isError && <Card className="resource-card"><p className="resource-empty">Prediction is unavailable until telemetry is recorded.</p></Card>}
-      {data && (
-        <Card className="resource-card">
-          <div className="detail-grid">
-            <Metric label="Assessment" value={data.predicted_failure} />
-            <Metric label="Confidence" value={`${Math.round(data.confidence * 100)}%`} />
-            <Metric label="Model" value={data.prediction_type} />
-            <Metric label="Estimated remaining" value={data.estimated_remaining_km === null ? "Not available" : `${data.estimated_remaining_km.toLocaleString()} km`} />
-          </div>
-          <section className="report-section"><h2>Recommended action</h2><p>{data.recommended_action}</p></section>
-        </Card>
+    <VehicleWorkspace
+      title="Predictions"
+      subtitle="Look ahead with a clearer view of your vehicle’s condition."
+    >
+      {query.isLoading && <Loading />}
+      {query.isError && (
+        <p role="alert">
+          Predictions could not be loaded.{" "}
+          <button className="text-button" onClick={() => query.refetch()}>
+            Retry
+          </button>
+        </p>
       )}
-    </div>
+      {data && (
+        <>
+          <section className="card resource-card prediction-overview">
+            <p className="eyebrow">CURRENT ASSESSMENT</p>
+            <h2>{data.predicted_failure.replaceAll("_", " ")}</h2>
+            <div className="detail-grid">
+              <div className="metric">
+                <span>Model confidence</span>
+                <strong>{Math.round(data.confidence * 100)}%</strong>
+              </div>
+              <div className="metric">
+                <span>Prediction method</span>
+                <strong>{data.prediction_type}</strong>
+              </div>
+              <div className="metric">
+                <span>Estimated remaining</span>
+                <strong>
+                  {data.estimated_remaining_km === null
+                    ? "Not available"
+                    : `${data.estimated_remaining_km.toLocaleString()} km`}
+                </strong>
+              </div>
+            </div>
+          </section>
+          <section className="card resource-card">
+            <h2>Recommended next step</h2>
+            <p className="report-summary">{data.recommended_action}</p>
+          </section>
+          <p className="method-note">
+            These estimates use rules or a model trained on synthetic data.
+            Confidence describes the model output; it is not a measured
+            probability of a real-world failure.
+          </p>
+        </>
+      )}
+    </VehicleWorkspace>
   );
 }
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return <div className="metric"><span>{label}</span><strong>{value}</strong></div>;
-}
-
-export default Predictions;

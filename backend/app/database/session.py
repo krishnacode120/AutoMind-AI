@@ -2,11 +2,10 @@
 
 from collections.abc import Generator
 
+from app.config.settings import settings
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
-
-from app.config.settings import settings
 
 
 def _connect_args(database_url: str) -> dict[str, bool]:

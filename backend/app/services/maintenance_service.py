@@ -11,7 +11,6 @@ from app.schemas.maintenance import (
 )
 from app.utils.time_utils import utc_now
 
-
 OIL_LIFE_THRESHOLD = 30.0
 OIL_KM_MULTIPLIER = 100.0
 

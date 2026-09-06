@@ -4,7 +4,6 @@ from app.simulator.enums import VehicleState
 from app.simulator.physics_models import PhysicsSnapshot
 from app.simulator.state_machine import VehicleStateMachine
 
-
 MIN_SPEED = 0.0
 MAX_ACCELERATION_DELTA = 8.0
 MAX_BRAKING_DELTA = -10.0

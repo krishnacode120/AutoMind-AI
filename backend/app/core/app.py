@@ -1,7 +1,5 @@
 """FastAPI application factory."""
 
-from fastapi import FastAPI
-
 from app.api.router import router
 from app.config.logging import setup_logging
 from app.config.settings import settings
@@ -13,6 +11,7 @@ from app.core.exceptions import (
 )
 from app.core.lifespan import lifespan
 from app.core.middleware import configure_middleware
+from fastapi import FastAPI
 
 
 def create_app() -> FastAPI:

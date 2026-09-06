@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { CarFront, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import PageHeader from "../components/common/PageHeader";
 import Loading from "../components/common/Loading";
@@ -21,6 +21,7 @@ const defaults: VehicleCreate = {
 
 export default function Vehicles() {
   const query = usePrimaryVehicle();
+  const [search, setSearch] = useState("");
   const cache = useQueryClient();
   const dialog = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState<Vehicle | null>(null);
@@ -51,7 +52,10 @@ export default function Vehicles() {
   return (
     <div className="resource-page">
       <div className="page-toolbar">
-        <PageHeader title="Vehicles" />
+        <PageHeader
+          title="Vehicles"
+          subtitle="Your garage, connected to a little more intelligence."
+        />
         <button className="action-button" onClick={() => openEditor(null)}>
           <Plus size={16} />
           Add vehicle
@@ -69,49 +73,87 @@ export default function Vehicles() {
       {query.data?.length === 0 && (
         <p className="resource-empty">No vehicles registered.</p>
       )}
+      {!!query.data?.length && (
+        <div className="vehicle-list-head">
+          <p>
+            {query.data.length} registered{" "}
+            {query.data.length === 1 ? "vehicle" : "vehicles"}
+          </p>
+          <input
+            className="vehicle-search"
+            aria-label="Search vehicles"
+            placeholder="Search by name, make, or model…"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+      )}
+      {!!query.data?.length &&
+        !query.data.some((vehicle) =>
+          `${vehicle.name} ${vehicle.manufacturer} ${vehicle.model}`
+            .toLowerCase()
+            .includes(search.toLowerCase()),
+        ) && <p className="resource-empty">No vehicles match your search.</p>}
       <div className="data-list">
-        {query.data?.map((vehicle) => (
-          <article className="data-list__item" key={vehicle.id}>
-            <div>
-              <strong>{vehicle.name}</strong>
-              <p>
-                {vehicle.manufacturer} {vehicle.model} &middot; {vehicle.year}
-              </p>
-              <p>
-                {vehicle.fuel_type} &middot; {vehicle.transmission} &middot;{" "}
-                {vehicle.odometer.toLocaleString()} km
-              </p>
-            </div>
-            <div className="row-actions">
-              <button
-                className="action-button"
-                disabled={query.vehicleId === vehicle.id}
-                onClick={() => query.selectVehicle(vehicle.id)}
-              >
-                {query.vehicleId === vehicle.id ? "Selected" : "Select"}
-              </button>
-              <button
-                className="icon-button"
-                title={`Edit ${vehicle.name}`}
-                aria-label={`Edit ${vehicle.name}`}
-                onClick={() => openEditor(vehicle)}
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                className="icon-button danger"
-                title={`Delete ${vehicle.name}`}
-                aria-label={`Delete ${vehicle.name}`}
-                onClick={() => {
-                  remove.reset();
-                  setDeleting(vehicle);
-                }}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </article>
-        ))}
+        {query.data
+          ?.filter((vehicle) =>
+            `${vehicle.name} ${vehicle.manufacturer} ${vehicle.model}`
+              .toLowerCase()
+              .includes(search.toLowerCase()),
+          )
+          .map((vehicle) => (
+            <article
+              className={
+                "data-list__item " +
+                (query.vehicleId === vehicle.id ? "is-selected" : "")
+              }
+              key={vehicle.id}
+            >
+              <div>
+                <div className="vehicle-card-heading">
+                  <span className="vehicle-card-icon">
+                    <CarFront size={23} />
+                  </span>
+                  <strong>{vehicle.name}</strong>
+                </div>
+                <p>
+                  {vehicle.manufacturer} {vehicle.model} &middot; {vehicle.year}
+                </p>
+                <p>
+                  {vehicle.fuel_type} &middot; {vehicle.transmission} &middot;{" "}
+                  {vehicle.odometer.toLocaleString()} km
+                </p>
+              </div>
+              <div className="row-actions">
+                <button
+                  className="action-button"
+                  disabled={query.vehicleId === vehicle.id}
+                  onClick={() => query.selectVehicle(vehicle.id)}
+                >
+                  {query.vehicleId === vehicle.id ? "Selected" : "Select"}
+                </button>
+                <button
+                  className="icon-button"
+                  title={`Edit ${vehicle.name}`}
+                  aria-label={`Edit ${vehicle.name}`}
+                  onClick={() => openEditor(vehicle)}
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  className="icon-button danger"
+                  title={`Delete ${vehicle.name}`}
+                  aria-label={`Delete ${vehicle.name}`}
+                  onClick={() => {
+                    remove.reset();
+                    setDeleting(vehicle);
+                  }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </article>
+          ))}
       </div>
       {deleting && (
         <section className="confirmation" role="alert">

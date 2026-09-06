@@ -1,9 +1,7 @@
 """System infrastructure status routes."""
 
-from fastapi import APIRouter
-
 from app.database.session import engine
-
+from fastapi import APIRouter
 
 router = APIRouter(tags=["System"])
 

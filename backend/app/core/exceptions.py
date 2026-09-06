@@ -1,10 +1,11 @@
 """Application exception types and handlers."""
 
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
+import logging
 
 from app.core.request_id import get_request_id
 from app.core.responses import error
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
 
 
 class GlobalException(Exception):
@@ -39,10 +40,15 @@ async def unhandled_exception_handler(
     exc: Exception,
 ) -> JSONResponse:
     """Convert unexpected exceptions into consistent JSON responses."""
+    logging.getLogger(__name__).error(
+        "Unhandled request error [%s]",
+        get_request_id(request),
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=error(
-            message=str(exc) or "Internal server error",
+            message="Internal server error",
             request_id=get_request_id(request),
         ),
     )

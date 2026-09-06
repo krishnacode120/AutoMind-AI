@@ -3,7 +3,6 @@
 from collections.abc import Mapping
 from typing import Any
 
-
 ContextLike = Mapping[str, Any]
 
 

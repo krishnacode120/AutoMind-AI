@@ -4,12 +4,10 @@ from contextvars import ContextVar
 from time import perf_counter
 from uuid import uuid4
 
+from app.config.logging import get_logger
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
-
-from app.config.logging import get_logger
-
 
 REQUEST_ID_HEADER = "X-Request-ID"
 _request_id_context: ContextVar[str | None] = ContextVar(

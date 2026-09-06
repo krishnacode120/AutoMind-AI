@@ -13,6 +13,8 @@ def max_vehicle_year() -> int:
 class VehicleBase(BaseModel):
     """Shared vehicle fields."""
 
+    model_config = ConfigDict(str_strip_whitespace=True, allow_inf_nan=False)
+
     name: str | None = Field(default=None, min_length=1, max_length=100)
     manufacturer: str | None = Field(default=None, min_length=1, max_length=100)
     model: str | None = Field(default=None, min_length=1, max_length=100)

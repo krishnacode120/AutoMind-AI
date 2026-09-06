@@ -1,27 +1,87 @@
-import PageHeader from "../components/common/PageHeader";
-import Card from "../components/common/Card";
+import { useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import VehicleWorkspace from "../components/common/VehicleWorkspace";
 import Loading from "../components/common/Loading";
-import { useAlerts } from "../hooks/useAlerts";
 import { usePrimaryVehicle } from "../hooks/usePrimaryVehicle";
+import { useInsights } from "../hooks/useInsights";
 
-function Alerts() {
-  const { vehicle, vehicleId, isLoading: vehiclesLoading } = usePrimaryVehicle();
-  const { data, isLoading, isError } = useAlerts(vehicleId ?? 0);
-
+export default function Alerts() {
+  const { vehicleId } = usePrimaryVehicle();
+  const query = useInsights(vehicleId ?? 0);
+  const [filter, setFilter] = useState("ALL");
+  const alerts = query.data?.alerts.alerts ?? [];
+  const filtered = alerts.filter(
+    (alert) => filter === "ALL" || alert.severity === filter,
+  );
   return (
-    <div className="resource-page">
-      <PageHeader title="Alerts" subtitle="Active conditions that need attention" />
-      {(vehiclesLoading || isLoading) && <Loading />}
-      {!vehiclesLoading && !vehicle && <Card className="resource-card"><p className="resource-empty">Add a vehicle to review alerts.</p></Card>}
-      {isError && <Card className="resource-card"><p className="resource-empty">Alerts are unavailable until telemetry is recorded.</p></Card>}
-      {data && (
-        <Card className="resource-card">
-          <p className="report-summary">{data.alert_count} active alerts{data.highest_severity ? ` | Highest severity: ${data.highest_severity}` : ""}</p>
-          {data.alerts.length ? <div className="data-list">{data.alerts.map((alert) => <article className="data-list__item" key={`${alert.type}-${alert.timestamp}`}><div><strong>{alert.title}</strong><p>{alert.description}</p><p>{alert.recommendation}</p></div><span className={`priority priority--${alert.severity.toLowerCase()}`}>{alert.severity}</span></article>)}</div> : <p className="resource-empty">No active alerts.</p>}
-        </Card>
+    <VehicleWorkspace
+      title="Alerts"
+      subtitle="Spot the signals that need your attention."
+    >
+      {query.isLoading && <Loading />}
+      {query.isError && (
+        <p role="alert">
+          Alerts could not be loaded.{" "}
+          <button className="text-button" onClick={() => query.refetch()}>
+            Retry
+          </button>
+        </p>
       )}
-    </div>
+      {query.data && (
+        <>
+          <div className="page-toolbar">
+            <p className="report-summary">
+              {alerts.length} active {alerts.length === 1 ? "alert" : "alerts"}{" "}
+              from the latest reading
+            </p>
+            <div className="chart-tabs" aria-label="Alert severity">
+              {["ALL", "CRITICAL", "WARNING", "INFO"].map((level) => (
+                <button
+                  key={level}
+                  aria-pressed={filter === level}
+                  onClick={() => setFilter(level)}
+                >
+                  {level.toLowerCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          {filtered.length ? (
+            <div className="data-list">
+              {filtered.map((alert) => (
+                <article
+                  className="data-list__item alert-detail"
+                  key={alert.type}
+                >
+                  <div>
+                    <span
+                      className={`priority priority--${alert.severity.toLowerCase()}`}
+                    >
+                      {alert.severity}
+                    </span>
+                    <h2>{alert.title}</h2>
+                    <p>{alert.description}</p>
+                    <p className="recommended-action">{alert.recommendation}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <section className="card all-clear">
+              <CheckCircle2 size={36} />
+              <h2>
+                {alerts.length
+                  ? "No alerts in this category."
+                  : "All clear for now."}
+              </h2>
+              <p>
+                Alerts reflect the current reading and update as new telemetry
+                arrives.
+              </p>
+            </section>
+          )}
+        </>
+      )}
+    </VehicleWorkspace>
   );
 }
-
-export default Alerts;

@@ -24,8 +24,14 @@ async function main() {
     socket.on("framereceived", (frame) => streams.push(String(frame.payload))),
   );
   const name = `Browser test ${Date.now()}`;
+  async function navigate(label) {
+    await page.getByRole("link", { name: label, exact: true }).click();
+    await page
+      .getByRole("heading", { level: 1, name: label, exact: true })
+      .waitFor();
+  }
   async function createVehicle(vehicleName) {
-    await page.getByRole("link", { name: "Vehicles", exact: true }).click();
+    await navigate("Vehicles");
     await page
       .getByRole("button", { name: "Add vehicle", exact: true })
       .click();
@@ -54,7 +60,7 @@ async function main() {
       .fill(name + " edited");
     await page.getByRole("button", { name: "Save vehicle" }).click();
     await page.locator("dialog").waitFor({ state: "hidden" });
-    await page.getByRole("link", { name: "Dashboard", exact: true }).click();
+    await navigate("Dashboard");
     await page.getByText("Connected", { exact: true }).waitFor();
     await page
       .getByRole("button", { name: "Simulate drive", exact: true })
@@ -71,6 +77,45 @@ async function main() {
       path: path.join(artifacts, "dashboard-desktop.png"),
       fullPage: true,
     });
+    await page.getByRole("button", { name: "Switch to dark theme" }).click();
+    await page.reload();
+    await page.getByRole("button", { name: "Switch to light theme" }).waitFor();
+    assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
+    await page.screenshot({
+      path: path.join(artifacts, "dashboard-dark.png"),
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Switch to light theme" }).click();
+    await navigate("Telemetry");
+    await page.locator(".telemetry-table tbody tr").first().waitFor();
+    assert.equal(await page.locator(".telemetry-table tbody tr").count(), 20);
+    const downloadEvent = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export page CSV" }).click();
+    const download = await downloadEvent;
+    const exported = path.join(artifacts, "telemetry-export.csv");
+    await download.saveAs(exported);
+    const csv = fs.readFileSync(exported, "utf8");
+    assert.ok(csv.includes("battery_voltage"));
+    assert.equal(csv.trim().split("\r\n").length, 21);
+    await page.getByRole("button", { name: "Next readings page" }).click();
+    await page
+      .getByText("Page 2 · 20 readings per page", { exact: true })
+      .waitFor();
+    await navigate("Dashboard");
+    await page.getByLabel("Simulation scenario").selectOption("overheating");
+    await page
+      .getByRole("button", { name: "Simulate drive", exact: true })
+      .click();
+    await page
+      .getByText("60 simulated readings recorded.", { exact: true })
+      .waitFor();
+    await navigate("Alerts");
+    await page
+      .getByRole("heading", { name: "High engine temperature", exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: "critical", exact: true }).click();
+    assert.equal(await page.locator(".alert-detail").count(), 1);
+    await navigate("Dashboard");
     for (const route of [
       "Telemetry",
       "Health",
@@ -84,7 +129,7 @@ async function main() {
         .getByRole("heading", { level: 1, name: route, exact: true })
         .waitFor();
     }
-    await page.getByRole("link", { name: "BON", exact: true }).click();
+    await navigate("BON");
     await page.getByLabel("Message BON").fill("How is my car?");
     await page.getByLabel("Message BON").press("Enter");
     await page.locator(".bon-message--assistant").first().waitFor();
@@ -95,7 +140,7 @@ async function main() {
     await page.reload();
     await page.locator(".bon-message--assistant").first().waitFor();
     await createVehicle(name + " second");
-    await page.getByRole("link", { name: "BON", exact: true }).click();
+    await navigate("BON");
     assert.equal(
       await page.locator(".bon-message--assistant").count(),
       0,
@@ -106,7 +151,17 @@ async function main() {
     await page.getByRole("button", { name: "Clear conversation" }).click();
     await page.locator(".bon-message--assistant").waitFor({ state: "hidden" });
     await page.setViewportSize({ width: 390, height: 844 });
-    for (const route of ["Vehicles", "Dashboard", "BON"]) {
+    for (const route of [
+      "Vehicles",
+      "Dashboard",
+      "Telemetry",
+      "Health",
+      "Alerts",
+      "Maintenance",
+      "Predictions",
+      "Settings",
+      "BON",
+    ]) {
       await page.getByRole("link", { name: route, exact: true }).click();
       await page
         .getByRole("heading", { level: 1, name: route, exact: true })
@@ -122,7 +177,7 @@ async function main() {
         fullPage: true,
       });
     }
-    await page.getByRole("link", { name: "Vehicles", exact: true }).click();
+    await navigate("Vehicles");
     await page
       .getByRole("button", { name: `Delete ${name} edited`, exact: true })
       .click();
@@ -134,8 +189,16 @@ async function main() {
       .waitFor({ state: "hidden" });
     assert.deepEqual(errors, []);
     console.log(
-      "PASS: vehicle CRUD, simulation, WebSocket updates, all pages, BON persistence/clear/isolation, desktop and mobile.",
+      "PASS: CRUD, scenarios, WebSocket, CSV, history, themes, all pages, BON persistence/clear/isolation, desktop and mobile.",
     );
+  } catch (error) {
+    await page
+      .screenshot({
+        path: path.join(artifacts, "browser-failure.png"),
+        fullPage: true,
+      })
+      .catch(() => {});
+    throw error;
   } finally {
     for (const id of ids)
       await context.request.delete(`${backend}/vehicles/${id}`).catch(() => {});

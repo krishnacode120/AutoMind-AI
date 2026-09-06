@@ -1,205 +1,187 @@
 # AutoMind AI
 
-```text
-AutoMind AI — Intelligent Vehicle Monitoring, Prediction, and Assistant Platform
-```
+A vehicle intelligence workspace for telemetry, diagnostics, maintenance, and contextual guidance from BON.
 
-AutoMind AI is an end-to-end vehicle intelligence platform that combines telemetry simulation, deterministic diagnostics, machine-learning prediction, and conversational assistance.
-
-## BON AI Overview
-
-BON is the in-app assistant for vehicle context. BON parses intent, builds context from vehicle telemetry and system services, and returns guided responses for operators.
+AutoMind AI 2.0 combines a React dashboard with a FastAPI backend. Register vehicles, generate sample drives, inspect sensor history, and understand what the latest readings mean. Core workflows run locally without an external AI account.
 
 ## Features
 
-- FastAPI backend with modular service architecture
-- Real-time vehicle telemetry simulation and persistence
-- Health scoring, alert generation, and maintenance planning
-- Rule-based and ML-powered prediction framework
-- BON assistant endpoint for contextual chat
-- React + Vite dashboard for live vehicle monitoring
-- WebSocket telemetry streaming
+- Responsive dashboard with vehicle overview, health score, sensor metrics, and alerts.
+- Vehicle creation, editing, deletion, search, and persistent selection.
+- Normal driving, overheating, low fuel, and worn-brake simulation scenarios.
+- Live WebSocket updates with reconnect backoff and periodic refresh.
+- Interactive speed, RPM, temperature, and fuel charts.
+- Paged telemetry history and CSV export of the displayed page, with every recorded field.
+- Seven-system health assessments, alert severity filters, maintenance recommendations, and predictions.
+- BON conversations with retry, browser persistence, and clear-history controls.
+- Light and dark themes saved in the current browser.
 
-## System Architecture
+## Run locally
 
-- **Simulator Layer**: Generates vehicle state and telemetry snapshots.
-- **Service Layer**: Computes health, alerts, and maintenance outputs.
-- **Prediction Layer**: Supports rule and ML predictors with factory selection.
-- **AI Layer**: BON orchestrates intent parsing, context building, and response formatting.
-- **API Layer**: REST and WebSocket interfaces for frontend and integrations.
-- **Frontend Layer**: Dashboard and BON chat experiences.
+Requirements: Python 3.11 or 3.12 and Node.js 22.12 or later.
 
-## Folder Structure
+```sh
+python -m venv .venv
+# Windows PowerShell
+.venv/Scripts/Activate.ps1
+# macOS / Linux
+# source .venv/bin/activate
 
-```text
-AutoMind-AI/
-├── backend/
-│   ├── app/
-│   │   ├── ai/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── database/
-│   │   ├── ml/
-│   │   ├── models/
-│   │   ├── prediction/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── simulator/
-│   │   └── websocket/
-│   ├── tests/
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   └── Dockerfile
-├── docs/
-├── .github/workflows/
-├── docker-compose.yml
-└── requirements.txt
-```
-
-## Technology Stack
-
-- **Backend**: Python, FastAPI, SQLAlchemy, Pydantic
-- **ML**: scikit-learn, joblib
-- **Frontend**: React, TypeScript, Vite
-- **Database**: SQLite
-- **Tooling**: pytest, Ruff, GitHub Actions, Docker Compose
-
-## Installation Guide
-
-1. Clone the repository.
-2. Create environment files:
-   - `cp backend/.env.example backend/.env`
-   - `cp frontend/.env.example frontend/.env`
-3. Install dependencies:
-   - `pip install -r requirements.txt`
-   - `cd frontend && npm ci`
-
-## Backend Setup
-
-```bash
-cd backend
-uvicorn app.main:app --reload
-```
-
-Backend default URL: [http://localhost:8000](http://localhost:8000)
-
-## Frontend Setup
-
-```bash
+python -m pip install -r requirements-dev.txt
 cd frontend
-npm run dev
+npm ci
+cd ..
+python scripts/dev.py
 ```
 
-Frontend default URL: [http://localhost:5173](http://localhost:5173)
+Open [the workspace](http://127.0.0.1:5173) or [API documentation](http://127.0.0.1:8000/docs).
+Ctrl+C stops both services. Alternate ports:
 
-## Running the Simulator
-
-Create a vehicle on the Vehicles page, select it in the top bar, and click
-**Simulate drive** on Dashboard or Telemetry. Each click records 60 readings
-through the existing physics and sensor engines. This is an explicit sample
-drive, not an automatically running simulator. The dashboard receives updates
-over WebSocket and also refreshes periodically.
-
-The equivalent API call is `POST /api/v1/vehicles/{id}/simulation?samples=60`
-(1-300 samples per request). Deleting a vehicle also deletes its telemetry.
-
-## Generating Datasets
-
-```bash
-cd backend
-python -m app.ml.dataset --size 10000 --seed 0 --output ../datasets/telemetry.csv
+```sh
+python scripts/dev.py --backend-port 8100 --frontend-port 5180
 ```
 
-The CSV and adjacent `.statistics.json` report contain generated data only;
-this command does not change the application database.
+The launcher configures the frontend proxy automatically. The backend uses
+`backend/automind.db` by default when started by the launcher. Existing records
+are preserved; nothing seeds or resets the database automatically.
 
-## Running ML Training
+To run services separately, execute `python -m uvicorn app.main:app --reload`
+from `backend/` and `npm run dev` from `frontend/`.
 
-```bash
-cd backend
-python -m app.ml.training.train --dataset "PATH_TO_DATASET.csv"
-```
+Environment files are optional. Copy each `.env.example` when overriding defaults.
+A relative `VITE_API_BASE_URL=/api/v1` uses the frontend origin for HTTP and
+WebSocket traffic. Set the process variable `VITE_PROXY_TARGET` for another
+backend port. A remote API requires `VITE_API_BASE_URL`, optionally
+`VITE_WS_BASE_URL`, and backend `CORS_ORIGINS` / `TRUSTED_HOSTS` JSON arrays.
+Restart services after changing configuration.
 
-Generated artifacts are saved in `backend/app/ml/models/`.
+## First drive
 
-Training uses report fields available at inference time and excludes record IDs,
-timestamps, injected-fault metadata, and prediction outputs. Validation data
-selects the model; a separate test set measures the selected model. These are
-synthetic, rule-defined risk labels, not evidence of real-world failure prediction.
-Retrain older artifacts with the current pipeline before using ML inference.
+1. Open **Vehicles**, click **Add vehicle**, and save its details.
+2. Open **Dashboard**, choose a scenario, and click **Simulate drive**.
+3. Explore **Telemetry**, **Health**, **Alerts**, **Maintenance**, and **Predictions**.
+4. Ask **BON** "How is my car?" or "What maintenance is needed?"
 
-## Running the Dashboard
-
-Run backend and frontend together, then open the frontend URL to access dashboard pages for vehicles, telemetry, health, maintenance, prediction, and BON.
-
-## BON Chat Usage
-
-- Endpoint: `POST /api/v1/bon/chat`
-- Input: vehicle ID, message, session ID
-- Output: answer, intent, confidence, context used, timestamp
-
-BON works on its dedicated page and on Dashboard. Browser conversations are
-isolated per vehicle and survive refreshes. Clear conversation removes the
-server history too. Server-side history is in memory and resets on restart.
+The interface generates 60, 120, or 300 readings per run. Each scenario is
+independent and starts its simulated sensors afresh; the odometer accumulates
+distance across runs. Samples use generation timestamps, so a batch is not a
+wall-clock replay of a real trip. Synthetic readings are stored as ordinary
+telemetry and influence the latest assessment. Deleting a vehicle also removes
+its telemetry history.
 
 ## Verification
 
-```bash
+```sh
+python -m ruff check backend/app backend/tests scripts
 cd backend
 python -m pytest -q
-ruff check app tests
 cd ../frontend
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
 
-The browser test expects the backend and frontend to be running on ports 8000
-and 5173. Set `API_URL` and `FRONTEND_URL` to test alternate ports. On Windows,
-`$env:PLAYWRIGHT_CHANNEL="msedge"` uses installed Edge instead of downloading
-Chromium. Test-created vehicles are removed after verification. Screenshots
-and local server logs belong in the ignored `.runtime/` directory.
+The browser runner starts isolated API and Vite services on available local ports,
+uses its own SQLite database under `.runtime/`, and stops its own processes.
+It checks vehicle CRUD, scenarios, streams, charts, CSV export, pagination,
+theme persistence, all pages on mobile, and BON persistence, isolation, and clearing.
 
-Configure frontend connections through `VITE_API_BASE_URL` and optionally
-`VITE_WS_BASE_URL`, as shown in `frontend/.env.example`. Restart Vite after
-changing environment variables. The backend's `CORS_ORIGINS` must include the
-chosen frontend origin when using a non-default port.
+On Windows, `$env:PLAYWRIGHT_CHANNEL="msedge"` uses installed Edge. To test
+existing servers, run `npm run test:e2e:running` with `FRONTEND_URL` and
+`API_URL` as needed. Screenshots, test databases, and logs belong in the ignored
+`.runtime/` directory. GitHub Actions runs backend checks, a clean frontend
+build, and isolated browser tests.
 
-## REST API Overview
+## Docker
 
-- `GET /api/v1/` and `GET /api/v1/health`
-- `POST/GET/PUT/DELETE /api/v1/vehicles`
-- `POST /api/v1/telemetry`
-- `GET/DELETE /api/v1/telemetry/history/{vehicle_id}`
-- `GET /api/v1/telemetry/latest/{vehicle_id}`
-- `GET /api/v1/vehicles/{id}/health`
-- `GET /api/v1/vehicles/{id}/alerts`
-- `GET /api/v1/vehicles/{id}/maintenance`
-- `GET /api/v1/vehicles/{id}/prediction`
-- `POST /api/v1/bon/chat`
+```sh
+docker compose up --build
+```
 
-## WebSocket Overview
+Open [the container workspace](http://localhost:8080). The compiled frontend is
+served by nginx, which proxies API and WebSocket requests to FastAPI. The
+backend runs as a non-root user; SQLite persists in the `automind-data` named
+volume. Environment files are not required. This setup binds to localhost and
+does not add user authentication or public access controls.
 
-- URL: `ws://localhost:8000/api/v1/ws/telemetry/{vehicle_id}`
-- Event: `telemetry_update`
-- Payload: serialized telemetry record in a standard message envelope
+## Architecture
 
-## Machine Learning Pipeline
+```text
+frontend/       React + TypeScript + Vite
+  src/pages/    Dashboard, vehicles, telemetry, reports, BON, settings
+  src/hooks/    Cached reads, shared diagnostics, live telemetry
+  src/services/ HTTP and WebSocket clients
+backend/app/
+  api/          Versioned REST and WebSocket routes
+  services/     Vehicle workflows and diagnostic aggregation
+  simulator/    State machine, physics, sensors, persistence
+  ai/           BON intent parsing, context, memory, response formatting
+  prediction/   Rule and optional ML predictors
+  ml/           Synthetic dataset generation, training, evaluation
+  database/     SQLAlchemy sessions and SQLite storage
+scripts/        Cross-platform development launcher
+```
 
-1. Generate CSV datasets from simulator outputs.
-2. Train Logistic Regression, Random Forest, and Gradient Boosting models.
-3. Evaluate and compare metrics.
-4. Persist the best model and metadata.
-5. Use `MLPredictor` or factory `auto` mode at runtime.
+Diagnostic pages share a single `/vehicles/{id}/insights` query. The backend
+calculates all reports from the same latest reading. Stream bursts update the
+telemetry cache immediately and batch report refreshes. REST polling remains
+available during reconnects. This rebuild requires no database schema migration.
 
-## Roadmap
+## API
 
-- Add production deployment templates (Kubernetes and managed DB options)
-- Expand test coverage with API integration scenarios
-- Add benchmark suite for simulation and prediction throughput
-- Add richer BON evaluation and prompt tuning workflows
+Base: `/api/v1`. Most REST routes return a `data` envelope; BON chat returns
+its typed response directly. See `/docs` for request schemas.
 
-## License
+| Method           | Route                        | Purpose                                 |
+| ---------------- | ---------------------------- | --------------------------------------- |
+| GET              | `/health`                    | Service liveness                        |
+| GET, POST        | `/vehicles`                  | List or create vehicles                 |
+| GET, PUT, DELETE | `/vehicles/{id}`             | Read, edit, or delete                   |
+| POST             | `/vehicles/{id}/simulation`  | Generate 1-300 readings with a scenario |
+| GET              | `/vehicles/{id}/insights`    | Combined diagnostic snapshot            |
+| GET              | `/vehicles/{id}/health`      | Health report                           |
+| GET              | `/vehicles/{id}/alerts`      | Active alerts                           |
+| GET              | `/vehicles/{id}/maintenance` | Maintenance recommendations             |
+| GET              | `/vehicles/{id}/prediction`  | Prediction report                       |
+| POST             | `/telemetry`                 | Ingest validated sensor data            |
+| GET              | `/telemetry/latest/{id}`     | Latest reading, or null when empty      |
+| GET, DELETE      | `/telemetry/history/{id}`    | Page or clear history                   |
+| POST             | `/bon/chat`                  | Vehicle-aware guidance                  |
+| GET, DELETE      | `/bon/sessions/{session_id}` | Read or clear conversation              |
 
-This project is licensed under MIT. See [LICENSE](LICENSE).
+Lists and history accept `skip >= 0` and `limit=1..1000` (default 100).
+History sorts newest first, breaking timestamp ties by record ID. Input normalizes
+timezone offsets to UTC; telemetry responses include a UTC offset. The
+WebSocket endpoint is `/api/v1/ws/telemetry/{vehicle_id}`, with messages shaped
+as `{"type":"telemetry_update","data":{...}}`.
+
+## BON and prediction behavior
+
+BON is a rule-based contextual assistant. Browser conversations are isolated
+per vehicle and retain the latest 200 messages. Server memory is process-local,
+capped at 1,000 sessions and 100 messages per session, expires after one hour
+without a new message, and resets on restart. The server exposes no user
+authentication; use it as a local or trusted workspace, and add identity and
+authorization before offering shared access.
+
+Health and alerts use rules. ML predictions are optional and fall back to the
+rule predictor when compatible artifacts are absent. Training labels come
+from synthetic, rule-defined scenarios. Model confidence and distance estimates
+are not validated real-world failure probabilities.
+
+## Dataset and model tools
+
+From `backend/`:
+
+```sh
+python -m app.ml.dataset --size 10000 --seed 0 --output ../datasets/telemetry.csv
+python -m app.ml.training.train --dataset ../datasets/telemetry.csv
+```
+
+Generation writes a CSV and statistics report without changing the application
+database. Training saves artifacts under `backend/app/ml/models/`. The
+pipeline excludes record IDs, timestamps, injected-fault metadata, and prediction
+outputs from inference features. Validation selects the model; a separate test
+split evaluates it. Retrain older artifacts before loading them.
+
+Licensed under the [MIT License](LICENSE).

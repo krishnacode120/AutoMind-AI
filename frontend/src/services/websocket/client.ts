@@ -2,7 +2,6 @@ import { ConnectionState, TelemetrySocketMessage } from "./types";
 import { EventEmitter } from "./events";
 import { API_BASE_URL } from "../api";
 
-const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 30000]; // Defined backoff delays
 
 export class TelemetryWebSocketClient extends EventEmitter {
@@ -88,11 +87,6 @@ export class TelemetryWebSocketClient extends EventEmitter {
   }
 
   private handleReconnect() {
-    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      this.setState(ConnectionState.DISCONNECTED);
-      return;
-    }
-
     const delay = RECONNECT_DELAYS[this.reconnectAttempts] || 30000;
     this.reconnectAttempts++;
     this.setState(ConnectionState.RECONNECTING);

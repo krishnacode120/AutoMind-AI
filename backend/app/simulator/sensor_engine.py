@@ -8,12 +8,11 @@ from app.simulator.physics_engine import (
     MAX_ACCELERATION_DELTA,
     MAX_BRAKING_DELTA,
     MAX_SPEED,
-    PhysicsEngine,
     STARTING_RPM,
+    PhysicsEngine,
 )
 from app.simulator.physics_models import PhysicsSnapshot
 from app.simulator.sensor_models import SensorSnapshot
-
 
 AMBIENT_TEMPERATURE = 25.0
 IDLE_TEMPERATURE_TARGET = 80.0

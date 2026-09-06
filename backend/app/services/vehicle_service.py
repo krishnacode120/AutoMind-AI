@@ -27,7 +27,7 @@ def list_vehicles(
     limit: int = 100,
 ) -> list[Vehicle]:
     """Return a list of vehicles."""
-    statement = select(Vehicle).offset(skip).limit(limit)
+    statement = select(Vehicle).order_by(Vehicle.id).offset(skip).limit(limit)
     return list(db.scalars(statement).all())
 
 

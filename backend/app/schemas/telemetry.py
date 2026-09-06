@@ -1,12 +1,21 @@
 """Telemetry request and response schemas."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, field_serializer
 
 
 class TelemetryCreate(BaseModel):
     """Schema for creating telemetry records."""
+
+    @field_validator("timestamp")
+    @classmethod
+    def normalize_timestamp(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        return (
+            value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+        )
 
     vehicle_id: int
     timestamp: datetime | None = None
@@ -31,11 +40,20 @@ class TelemetryCreate(BaseModel):
     odometer: float = Field(ge=0)
     fuel_consumption: float = Field(ge=0)
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True, str_strip_whitespace=True, allow_inf_nan=False
+    )
 
 
 class TelemetryResponse(BaseModel):
     """Schema returned for telemetry records."""
+
+    @field_serializer("timestamp", "created_at")
+    def serialize_utc(self, value: datetime) -> str:
+        aware = (
+            value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+        )
+        return aware.isoformat()
 
     id: int
     vehicle_id: int
@@ -62,7 +80,9 @@ class TelemetryResponse(BaseModel):
     fuel_consumption: float
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True, str_strip_whitespace=True, allow_inf_nan=False
+    )
 
 
 class TelemetryHistory(BaseModel):
@@ -71,7 +91,9 @@ class TelemetryHistory(BaseModel):
     vehicle_id: int
     records: list[TelemetryResponse]
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True, str_strip_whitespace=True, allow_inf_nan=False
+    )
 
 
 class LatestTelemetry(BaseModel):
@@ -80,4 +102,6 @@ class LatestTelemetry(BaseModel):
     vehicle_id: int
     telemetry: TelemetryResponse | None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True, str_strip_whitespace=True, allow_inf_nan=False
+    )

@@ -5,7 +5,6 @@ from typing import Protocol
 from app.schemas.health import HealthReport
 from app.utils.time_utils import utc_now
 
-
 BASE_HEALTH_SCORE = 100.0
 MIN_HEALTH_SCORE = 0.0
 MAX_HEALTH_SCORE = 100.0

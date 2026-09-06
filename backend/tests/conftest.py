@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import pytest
-
 from app.schemas.alert import AlertReport
 from app.schemas.health import HealthReport
 from app.schemas.maintenance import MaintenancePriority, MaintenanceReport

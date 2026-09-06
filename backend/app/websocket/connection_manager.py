@@ -1,7 +1,7 @@
 """WebSocket connection manager for handling client connections."""
 
-from collections import defaultdict
 import logging
+from collections import defaultdict
 
 from fastapi import WebSocket
 
