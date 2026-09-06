@@ -3,29 +3,38 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    env_file:
-      - backend/.env
     environment:
       DATABASE_URL: sqlite:////data/automind.db
+      DEBUG: "False"
+      ENVIRONMENT: production
+      TRUSTED_HOSTS: '["localhost","127.0.0.1","backend"]'
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
-      - ./backend:/app
       - automind-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    env_file:
-      - frontend/.env
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "127.0.0.1:8080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   automind-data:
